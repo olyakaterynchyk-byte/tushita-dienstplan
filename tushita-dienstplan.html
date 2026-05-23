@@ -1,0 +1,3259 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tushita Dienstplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF8F4;
+    --surface: #FFFFFF;
+    --surface-2: #F5F2EC;
+    --border: #E8E4DC;
+    --border-soft: #EFEBE3;
+    --text: #2E2E2E;
+    --text-soft: #6B6B66;
+    --text-mute: #9A9690;
+    --accent: #8FB8A9;
+    --accent-dark: #6F9D8E;
+    --accent-soft: #DCEAE3;
+    --danger: #D49A9A;
+    --danger-dark: #B97676;
+    --warning: #E8C690;
+    --warning-soft: #F5E6C5;
+    --info: #B8C9DC;
+    --info-soft: #DDE5EE;
+
+    --shift-frueh: #F2D2D6;
+    --shift-mittag: #DFDAB0;
+    --shift-mittag-highlight: #E8D49C;
+    --shift-spaet: #E0DDD2;
+    --shift-ganztag: #C8DEE6;
+    --shift-cleaning: #ECEAE0;
+    --shift-open: #C5D8E3;
+    --shift-putz: #F4D89B;
+
+    --av-1: #F2C8D2; --av-2: #B8DAE4; --av-3: #E8C9A8; --av-4: #D4B8C9;
+    --av-5: #C5D9C0; --av-6: #D9C5A8; --av-7: #C9B8D9; --av-8: #E2BFA0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Apercu Pro', 'Apercu', 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); font-size: 13px;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  /* etwas weicheres Letter-Spacing für Nunito */
+  h1, h2, h3, h4, .modal-title, .date-label { letter-spacing: -0.02em; }
+
+  /* ===== Login Screen ===== */
+  .login-screen {
+    display: none;
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #FAF8F4 0%, #DCEAE3 100%);
+    align-items: center; justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+  }
+  .login-screen.show { display: flex; }
+  .login-card {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    padding: 40px;
+    width: 100%; max-width: 420px;
+  }
+  .login-logo {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .login-logo .logo-pin {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    position: relative;
+  }
+  .login-logo .logo-pin::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--surface);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .login-logo span { font-size: 24px; font-weight: 700; transform: translateX(-2px); }
+  .login-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 6px; }
+  .login-subtitle { text-align: center; color: var(--text-soft); margin-bottom: 24px; font-size: 14px; }
+  .login-form .form-group { margin-bottom: 14px; }
+  .login-form label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--text-soft); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .login-form input {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); outline: none;
+    transition: border 0.15s;
+  }
+  .login-form input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%; padding: 12px;
+    background: var(--accent); color: white;
+    border-radius: 10px; font-weight: 600;
+    margin-top: 8px; transition: background 0.15s;
+  }
+  .login-btn:hover { background: var(--accent-dark); }
+  .login-error {
+    background: #FCE8E8; color: var(--danger-dark);
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; margin-bottom: 12px;
+    display: none;
+  }
+  .login-error.show { display: block; }
+  .login-hint {
+    margin-top: 16px; padding: 12px;
+    background: var(--info-soft);
+    border-radius: 10px;
+    font-size: 12px; color: var(--text-soft);
+    line-height: 1.5;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    height: 56px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 18px; font-weight: 800;
+    margin-right: 20px;
+    letter-spacing: -0.02em;
+  }
+  .logo-pin {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    position: relative;
+  }
+  .logo-pin::after {
+    content: ''; position: absolute;
+    width: 8px; height: 8px;
+    background: var(--surface); border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .area-switch {
+    display: flex; background: var(--surface-2);
+    border-radius: 12px; padding: 4px;
+    margin-left: 8px;
+  }
+  .area-switch button {
+    padding: 8px 18px;
+    border-radius: 9px;
+    font-size: 13px; font-weight: 700;
+    color: var(--text-soft);
+    transition: all 0.18s;
+    letter-spacing: 0.4px;
+  }
+  .area-switch button:hover { color: var(--text); }
+  .area-switch button.active {
+    background: var(--surface); color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .area-switch button[data-area="service"].active { color: var(--accent-dark); }
+  .area-switch button[data-area="kueche"].active { color: #B97E5F; }
+  .nav-tabs { display: flex; margin-left: 40px; gap: 4px; }
+  .nav-tab {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-soft);
+    transition: all 0.15s; position: relative;
+  }
+  .nav-tab:hover { background: var(--surface-2); color: var(--text); }
+  .nav-tab.active { color: var(--accent-dark); }
+  .nav-tab.active::after {
+    content: ''; position: absolute;
+    bottom: -16px; left: 10%; right: 10%;
+    height: 2px; background: var(--accent);
+    border-radius: 2px;
+  }
+  .nav-tab svg { width: 22px; height: 22px; }
+  .nav-tab .badge {
+    position: absolute; top: 6px; right: 6px;
+    min-width: 16px; height: 16px;
+    background: var(--danger); color: white;
+    border-radius: 8px; padding: 0 4px;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  @media (max-width: 1280px) {
+    .user-pill .info { display: none; }
+    .save-indicator span:last-child { display: none; }
+  }
+  @media (max-width: 900px) {
+    .nav-tab span.label { display: none; }
+    .header .logo span { display: none; }
+  }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-soft);
+  }
+  .icon-btn:hover { background: var(--surface-2); }
+  .user-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px;
+    background: var(--surface-2); border-radius: 20px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .user-pill:hover { background: var(--border-soft); }
+  .user-pill .avatar {
+    width: 28px; height: 28px; font-size: 11px;
+  }
+  .user-pill .info { line-height: 1.1; }
+  .user-pill .name { font-size: 12.5px; font-weight: 600; }
+  .user-pill .role { font-size: 10.5px; color: var(--text-mute); }
+
+  .role-badge {
+    padding: 3px 8px; border-radius: 6px;
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .role-badge.admin { background: var(--accent-soft); color: var(--accent-dark); }
+  .role-badge.employee { background: var(--info-soft); color: #5A7A9A; }
+
+  /* ===== Layout ===== */
+  .layout { display: flex; height: calc(100vh - 56px); }
+  .sidebar {
+    width: 260px; background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+    flex-shrink: 0;
+  }
+  @media (max-width: 1100px) {
+    .sidebar { width: 220px; }
+  }
+  .sidebar-tabs {
+    display: flex; padding: 12px 12px 8px; gap: 4px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .side-tab {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-mute);
+  }
+  .side-tab.active { background: var(--accent-soft); color: var(--accent-dark); }
+  .side-tab svg { width: 18px; height: 18px; }
+  .search-box { padding: 12px; position: relative; }
+  .search-box input {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); outline: none;
+    transition: border 0.15s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .employee-list { flex: 1; overflow-y: auto; padding: 4px 8px 16px; }
+  .employee-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 8px; border-radius: 10px;
+    cursor: pointer; transition: background 0.12s;
+    margin-bottom: 2px;
+  }
+  .employee-row:hover { background: var(--surface-2); }
+  .employee-row.you { background: var(--accent-soft); }
+  .employee-row.you:hover { background: #CDE3D9; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 12px;
+    position: relative; flex-shrink: 0;
+    letter-spacing: -0.02em;
+  }
+  .avatar.online::after {
+    content: ''; position: absolute;
+    right: -2px; bottom: -2px;
+    width: 10px; height: 10px;
+    background: #7BC09F; border: 2px solid var(--surface);
+    border-radius: 50%;
+  }
+  .emp-info { flex: 1; min-width: 0; }
+  .emp-name { font-weight: 700; font-size: 13px; }
+  .emp-hours { font-size: 11.5px; color: var(--text-mute); margin-top: 1px; font-weight: 600; }
+  .emp-hours .ok { color: var(--accent-dark); }
+  .emp-hours .warn { color: var(--danger-dark); }
+  .add-employee {
+    margin: 0 12px 12px; padding: 10px;
+    border: 1.5px dashed var(--border); border-radius: 10px;
+    color: var(--text-mute); font-size: 13px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .add-employee:hover {
+    border-color: var(--accent); color: var(--accent-dark);
+    background: var(--accent-soft);
+  }
+
+  /* ===== Main ===== */
+  .main { flex: 1; overflow: auto; background: var(--bg); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .toolbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+    flex-wrap: wrap;
+  }
+  .nav-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-soft);
+  }
+  .nav-btn:hover { background: var(--surface-2); }
+  .date-label { font-size: 18px; font-weight: 700; min-width: 180px; text-align: center; }
+  .today-btn {
+    padding: 7px 14px; border-radius: 8px;
+    background: var(--surface-2); color: var(--text);
+    font-size: 13px; font-weight: 500;
+  }
+  .today-btn:hover { background: var(--border-soft); }
+  .toolbar-spacer { flex: 1; }
+  .view-toggle {
+    display: flex; background: var(--surface-2);
+    border-radius: 8px; padding: 3px;
+  }
+  .view-toggle button {
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; color: var(--text-soft);
+  }
+  .view-toggle button.active {
+    background: var(--surface); color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .btn-primary {
+    background: var(--accent); color: white;
+    padding: 8px 16px; border-radius: 8px;
+    font-weight: 500; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-primary.disabled { background: var(--surface-2); color: var(--text-mute); cursor: not-allowed; }
+
+  /* ===== Schedule ===== */
+  .schedule-container { padding: 16px 20px 32px; overflow-x: auto; }
+  .schedule-grid { display: grid; gap: 10px; min-width: 100%; }
+  .schedule-month .schedule-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .schedule-week .schedule-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  @media (min-width: 1400px) {
+    .schedule-week .schedule-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  }
+  .day-header {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: 10px; padding: 9px 8px;
+    text-align: center; font-weight: 700;
+    font-size: 12px; color: var(--text-soft);
+  }
+  .day-header.today {
+    background: var(--accent-soft); color: var(--accent-dark);
+    border-color: var(--accent);
+  }
+  .day-header.weekend {
+    background: #E8E0D0;
+    color: var(--text);
+  }
+  .day-header.holiday {
+    background: #DCD3C0;
+    color: var(--text);
+  }
+  .day-header.weekend.today, .day-header.holiday.today { background: var(--accent-soft); color: var(--accent-dark); }
+  .day-header .holiday-name {
+    display: block;
+    font-size: 9.5px;
+    color: var(--text-soft);
+    font-weight: 600;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .day-header .date-num { font-size: 16px; color: var(--text); margin-top: 2px; }
+  .day-header.today .date-num { color: var(--accent-dark); }
+  .day-cell {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: 12px; padding: 10px;
+    min-height: 150px;
+    display: flex; flex-direction: column; gap: 7px;
+    transition: border-color 0.15s, background 0.15s;
+    min-width: 0;
+  }
+  .day-cell:hover { border-color: var(--border); }
+  .day-cell.other-month { background: var(--surface-2); opacity: 0.55; }
+  .day-cell.today-cell {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .day-cell.weekend-cell { background: #F2EBDB; }
+  .day-cell.holiday-cell { background: #EBE2CC; }
+  .section-label {
+    grid-column: 1 / -1;
+    font-size: 15px; font-weight: 700;
+    color: var(--text); padding: 4px;
+    margin-top: 8px;
+  }
+
+  /* Shifts */
+  .shift {
+    border-radius: 9px; padding: 9px 11px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
+    border: 1px solid transparent;
+    position: relative;
+    user-select: none;
+  }
+  .shift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.09);
+  }
+  .shift:active { transform: translateY(0); }
+  .shift-title {
+    font-size: 11.5px; font-weight: 700; color: var(--text);
+    margin-bottom: 4px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 4px; line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .shift-time {
+    font-size: 11.5px; color: var(--text); font-weight: 600;
+    display: flex; justify-content: space-between;
+    letter-spacing: -0.01em;
+  }
+  .shift-employee {
+    font-size: 10.5px; color: var(--text-soft); margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .shift-slot {
+    font-size: 9.5px; color: var(--text-soft); font-weight: 700;
+    padding: 1px 5px; background: rgba(255,255,255,0.55);
+    border-radius: 4px;
+  }
+  .shift.frueh { background: var(--shift-frueh); }
+  .shift.mittag { background: var(--shift-mittag); }
+  .shift.mittag-kurz { background: var(--shift-mittag-highlight); }
+  .shift.spaet { background: var(--shift-spaet); }
+  .shift.ganztag { background: var(--shift-ganztag); }
+  .shift.cleaning { background: var(--shift-cleaning); }
+  .shift.open { background: var(--shift-open); }
+  .shift.putz { background: var(--shift-putz); }
+  .shift.unassigned { opacity: 0.7; border-style: dashed; border-color: var(--text-mute); }
+  .shift.mine {
+    box-shadow: 0 0 0 2px var(--accent-dark) inset;
+  }
+  .shift.draft {
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.35) 0 6px, transparent 6px 12px);
+    border: 1.5px dashed rgba(0,0,0,0.25);
+  }
+  .shift-tag.draft { background: rgba(0,0,0,0.15); color: var(--text); }
+  .shift-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+  }
+  .shift-tag.mine { background: var(--accent-dark); color: white; }
+  .shift-tag.tausch { background: var(--warning); color: #6B4F1F; }
+
+  .add-shift {
+    margin-top: auto; padding: 7px;
+    border: 1.5px dashed var(--border); border-radius: 8px;
+    color: var(--text-mute); font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .add-shift:hover {
+    border-color: var(--accent); color: var(--accent-dark);
+    background: var(--accent-soft);
+  }
+  .add-shift::before { content: '+'; font-size: 16px; font-weight: 700; line-height: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(40,40,40,0.4);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 16px;
+    width: 100%; max-width: 500px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+  }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-title { font-size: 17px; font-weight: 600; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-soft);
+  }
+  .modal-close:hover { background: var(--surface-2); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-soft);
+    display: flex; gap: 8px; justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-size: 12.5px; font-weight: 500;
+    color: var(--text-soft); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); outline: none;
+    transition: border 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-row { display: flex; gap: 12px; }
+  .form-row > * { flex: 1; }
+  .btn {
+    padding: 9px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .btn-secondary { background: var(--surface-2); color: var(--text); }
+  .btn-secondary:hover { background: var(--border-soft); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: var(--danger-dark); }
+  .btn-ghost { color: var(--text-soft); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-warning { background: var(--warning); color: #6B4F1F; }
+  .btn-warning:hover { background: #E0B873; }
+
+  .shift-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .shift-type-option {
+    padding: 10px 12px; border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer; text-align: left;
+    transition: all 0.15s;
+  }
+  .shift-type-option:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.06); }
+  .shift-type-option.selected { border-color: var(--accent-dark); box-shadow: 0 0 0 1px var(--accent-dark); }
+  .shift-type-option.frueh { background: var(--shift-frueh); }
+  .shift-type-option.mittag { background: var(--shift-mittag); }
+  .shift-type-option.mittag-kurz { background: var(--shift-mittag-highlight); }
+  .shift-type-option.spaet { background: var(--shift-spaet); }
+  .shift-type-option.ganztag { background: var(--shift-ganztag); }
+  .shift-type-option.cleaning { background: var(--shift-cleaning); }
+  .shift-type-option.open { background: var(--shift-open); }
+  .shift-type-option.putz { background: var(--shift-putz); }
+  .shift-type-option .label { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .shift-type-option .time { font-size: 11.5px; color: var(--text-soft); }
+
+  /* Employees grid */
+  .employees-view { padding: 24px; }
+  .employees-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .employees-search {
+    flex: 1; max-width: 400px;
+    padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); outline: none;
+  }
+  .employees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .employee-card {
+    background: var(--surface); border-radius: 14px;
+    padding: 20px 16px; text-align: center;
+    border: 1px solid var(--border-soft);
+    transition: all 0.15s; cursor: pointer; position: relative;
+  }
+  .employee-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+  .employee-card .avatar {
+    width: 60px; height: 60px;
+    margin: 0 auto 12px; font-size: 18px;
+  }
+  .employee-card .emp-name { font-size: 16px; }
+  .employee-card .emp-role { font-size: 13px; color: var(--text-mute); margin-top: 2px; }
+  .employee-card .emp-badge {
+    display: inline-block; padding: 3px 10px;
+    background: var(--surface-2); border-radius: 12px;
+    font-size: 11px; color: var(--text-soft); margin-top: 8px;
+  }
+  .employee-card .card-menu {
+    position: absolute; top: 10px; right: 10px;
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-mute);
+  }
+  .employee-card .card-menu:hover { background: var(--surface-2); color: var(--text); }
+  .employee-card.is-you { border-color: var(--accent); }
+
+  /* Dashboard */
+  .dashboard { padding: 24px; }
+  .week-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .week-card {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: 14px; padding: 18px;
+  }
+  .week-card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .week-card-title { font-weight: 600; font-size: 16px; }
+  .week-card-pct { font-size: 18px; font-weight: 600; }
+  .progress {
+    height: 6px; background: var(--surface-2);
+    border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: var(--accent);
+    border-radius: 3px; transition: width 0.3s;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: 14px; padding: 18px;
+  }
+  .stat-number { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 13px; color: var(--text-soft); }
+
+  /* Tausch view */
+  .tausch-list { padding: 24px; }
+  .tausch-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--warning);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .tausch-card.taken { border-left-color: var(--accent); opacity: 0.7; }
+  .tausch-info { flex: 1; min-width: 250px; }
+  .tausch-shift-info {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .tausch-shift-info > div {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-soft);
+  }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    z-index: 2000; opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .context-menu {
+    position: fixed; background: var(--surface);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    padding: 6px; z-index: 1500;
+    min-width: 200px; display: none;
+  }
+  .context-menu.show { display: block; }
+  .context-menu button {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 8px 12px;
+    border-radius: 6px; font-size: 13px;
+    color: var(--text); text-align: left;
+  }
+  .context-menu button:hover { background: var(--surface-2); }
+  .context-menu button.danger { color: var(--danger-dark); }
+  .context-menu button.warning { color: #8A6628; }
+  .context-menu button svg { width: 15px; height: 15px; }
+  .context-menu hr { border: none; border-top: 1px solid var(--border-soft); margin: 4px 0; }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-mute);
+  }
+  .empty-state svg { width: 60px; height: 60px; opacity: 0.4; margin-bottom: 16px; }
+
+  /* Profile */
+  .profile-view { padding: 24px; }
+  .profile-card {
+    background: var(--surface); border-radius: 14px;
+    padding: 24px; width: 280px; text-align: center;
+    border: 1px solid var(--border-soft);
+  }
+  .profile-card .avatar {
+    width: 80px; height: 80px; margin: 0 auto 12px;
+    font-size: 24px;
+  }
+  .profile-card .name { font-size: 20px; font-weight: 600; }
+  .profile-card .role { color: var(--text-soft); margin-bottom: 16px; }
+  .profile-actions {
+    display: flex; gap: 8px; justify-content: center; margin-top: 20px;
+  }
+  .action-circle {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+  }
+  .action-circle.green { background: var(--accent); }
+  .action-circle.red { background: var(--danger); }
+  .action-circle.gray { background: var(--surface-2); color: var(--text-soft); }
+  .profile-details {
+    flex: 1; min-width: 300px;
+    background: var(--surface); border-radius: 14px;
+    padding: 24px; border: 1px solid var(--border-soft);
+  }
+  .profile-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+  }
+  .profile-form-grid .form-group { margin: 0; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--accent-dark); font-weight: 500;
+    margin-bottom: 16px; cursor: pointer;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  .info-banner {
+    background: var(--info-soft);
+    border-left: 3px solid var(--info);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text);
+    margin: 0 24px 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .tpl-area-btn {
+    background: transparent; color: var(--text-soft);
+    border: none; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tpl-area-btn:hover { color: var(--text); }
+  .tpl-area-btn.active {
+    background: var(--surface); color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .tpl-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .tpl-row:hover { border-color: var(--border); }
+  .tpl-color-swatch {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .tpl-color-swatch input[type="color"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    border: none;
+  }
+  .tpl-row input[type="text"], .tpl-row input[type="time"] {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    outline: none;
+    font-size: 12.5px;
+  }
+  .tpl-row input[type="text"]:focus, .tpl-row input[type="time"]:focus { border-color: var(--accent); }
+  .tpl-row .tpl-name { flex: 1; min-width: 0; }
+  .tpl-row .tpl-time { width: 92px; }
+  .tpl-row .tpl-delete {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-mute);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .tpl-row .tpl-delete:hover { background: #FCE8E8; color: var(--danger-dark); }
+
+  .save-indicator {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .save-indicator .dot {
+    width: 6px; height: 6px;
+    background: var(--accent-dark);
+    border-radius: 50%;
+  }
+  .save-indicator.saving {
+    background: var(--warning-soft);
+    color: #8A6628;
+  }
+  .save-indicator.saving .dot {
+    background: #8A6628;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .password-display {
+    background: var(--surface-2);
+    border: 1px dashed var(--border);
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 14px;
+    text-align: center;
+    margin: 12px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-pin"></div>
+      <span>Tushita</span>
+    </div>
+    <div class="login-title" id="login-title">Anmelden</div>
+    <div class="login-subtitle" id="login-subtitle">Mit deiner E-Mail-Adresse anmelden</div>
+    <div class="login-error" id="login-error"></div>
+    <form class="login-form" id="login-form" onsubmit="event.preventDefault();handleLogin();">
+      <div class="form-group" id="login-name-group" style="display:none;">
+        <label>Vorname</label>
+        <input type="text" id="login-firstname">
+      </div>
+      <div class="form-group" id="login-name-group-2" style="display:none;">
+        <label>Nachname</label>
+        <input type="text" id="login-lastname">
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="login-email" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Passwort</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="login-submit">Anmelden</button>
+    </form>
+    <div class="login-hint" id="login-hint" style="display:none;">
+      <b>Erster Start:</b> Lege jetzt einen Admin-Account an. Mit diesem Account kannst du später Mitarbeiter anlegen.
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" style="display:none;">
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-pin"></div>
+    <span>Tushita</span>
+  </div>
+
+  <div class="area-switch">
+    <button id="area-service" data-area="service" class="active" onclick="switchArea('service')">SERVICE</button>
+    <button id="area-kueche" data-area="kueche" onclick="switchArea('kueche')">KÜCHE</button>
+  </div>
+
+  <nav class="nav-tabs" id="nav-tabs">
+    <button class="nav-tab" data-view="dashboard" onclick="switchView('dashboard')" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-tab active" data-view="schedule" onclick="switchView('schedule')" title="Dienstplan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </button>
+    <button class="nav-tab" data-view="employees" onclick="switchView('employees')" title="Mitarbeiter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+    <button class="nav-tab" data-view="tausch" onclick="switchView('tausch')" title="Tauschbörse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      <span class="badge" id="tausch-badge" style="display:none;">0</span>
+    </button>
+    <button class="nav-tab" data-view="time" onclick="switchView('time')" title="Zeiterfassung">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+  </nav>
+
+  <div class="header-right">
+    <button class="icon-btn" id="templates-btn" onclick="openTemplatesModal()" title="Schicht-Typen verwalten">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="icon-btn" id="export-btn" onclick="exportData()" title="Export JSON">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+    <button class="icon-btn" id="import-btn" onclick="document.getElementById('import-file').click()" title="Import JSON">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    <div class="save-indicator" id="save-indicator" title="Alle Änderungen werden automatisch im Browser gespeichert">
+      <span class="dot"></span>
+      <span>Auto-Save</span>
+    </div>
+    <div class="user-pill" onclick="showUserMenu(event)" id="user-pill">
+      <div class="avatar" id="user-avatar"></div>
+      <div class="info">
+        <div class="name" id="user-name"></div>
+        <div class="role" id="user-role"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="side-tab active" title="Mitarbeiter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+    <div class="search-box">
+      <input type="text" id="emp-search" placeholder="Suchen..." oninput="renderSidebar()">
+    </div>
+    <div class="employee-list" id="employee-list"></div>
+    <button class="add-employee" id="add-employee-btn" onclick="openEmployeeModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Mitarbeiter hinzufügen
+    </button>
+  </aside>
+
+  <main class="main">
+
+    <!-- Schedule -->
+    <div class="view active" id="view-schedule">
+      <div class="toolbar">
+        <button class="nav-btn" onclick="navigateDate(-1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="date-label" id="date-label">Mai 2026</div>
+        <button class="nav-btn" onclick="navigateDate(1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="today-btn" onclick="goToToday()">Heute</button>
+
+        <div class="toolbar-spacer"></div>
+
+        <div class="view-toggle">
+          <button id="vt-month" class="active" onclick="setView('month')">Monat</button>
+          <button id="vt-week" onclick="setView('week')">Woche</button>
+        </div>
+
+        <button class="btn-secondary" id="copy-period-btn" onclick="openCopyPeriodModal()" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Vorlage
+        </button>
+
+        <button class="btn-publish" id="publish-btn" onclick="openPublishModal()" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;background:var(--warning);color:#6B4F1F;position:relative;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          Veröffentlichen
+          <span class="badge" id="draft-badge" style="display:none;background:#B97676;color:white;border-radius:10px;padding:1px 7px;font-size:10.5px;font-weight:700;">0</span>
+        </button>
+
+        <button class="btn-primary" id="new-shift-btn" onclick="openShiftModal(null)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Schicht
+        </button>
+      </div>
+
+      <div id="info-banner-employee" class="info-banner" style="margin-top:16px;display:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>Du siehst den Dienstplan im Lese-Modus. Auf deine eigenen Schichten klicken, um sie zum Tausch zu stellen.</div>
+      </div>
+
+      <div class="schedule-container" id="schedule-container"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="view" id="view-dashboard">
+      <div class="dashboard">
+        <div class="week-cards" id="week-cards"></div>
+        <div class="stats-row" id="stats-row"></div>
+      </div>
+    </div>
+
+    <!-- Employees -->
+    <div class="view" id="view-employees">
+      <div class="employees-view">
+        <div class="employees-header">
+          <input class="employees-search" id="emp-search-2" placeholder="Name, Tätigkeit, E-Mail..." oninput="renderEmployeesGrid()">
+          <button class="btn-primary" id="add-employee-btn-2" onclick="openEmployeeModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Mitarbeiter anlegen
+          </button>
+        </div>
+        <div class="employees-grid" id="employees-grid"></div>
+      </div>
+    </div>
+
+    <!-- Tausch -->
+    <div class="view" id="view-tausch">
+      <div class="tausch-list">
+        <h2 style="font-size:22px;margin-bottom:6px;">Tauschbörse</h2>
+        <div style="color:var(--text-soft);margin-bottom:24px;">Schichten, die zum Tausch angeboten werden.</div>
+        <div id="tausch-content"></div>
+      </div>
+    </div>
+
+    <!-- Time -->
+    <div class="view" id="view-time">
+      <div class="dashboard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <h2 style="font-size:20px;">Zeiterfassung</h2>
+          <div class="view-toggle" style="display:flex;background:var(--surface-2);border-radius:8px;padding:3px;">
+            <button id="time-mode-list" class="active" onclick="setTimeMode('list')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text-soft);">Liste</button>
+            <button id="time-mode-person" onclick="setTimeMode('person')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text-soft);">Pro Mitarbeiter</button>
+          </div>
+        </div>
+        <div class="stat-card" style="margin-bottom:16px;">
+          <div>
+            <div class="stat-number" id="time-total">0h</div>
+            <div class="stat-label" id="time-label">Geplante Stunden insgesamt (aktuelle Periode)</div>
+          </div>
+        </div>
+        <div id="time-list"></div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="view" id="view-profile">
+      <div class="profile-view">
+        <a class="back-link" onclick="switchView('employees')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Zurück
+        </a>
+        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+          <div class="profile-card" id="profile-card-content"></div>
+          <div class="profile-details" id="profile-details-content"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Shift Modal -->
+<div class="modal-overlay" id="shift-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="shift-modal-title">Schicht erstellen</div>
+      <button class="modal-close" onclick="closeModal('shift-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="shift-modal-body"></div>
+    <div class="modal-footer" id="shift-modal-footer"></div>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-overlay" id="employee-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="employee-modal-title">Mitarbeiter anlegen</div>
+      <button class="modal-close" onclick="closeModal('employee-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vorname</label>
+          <input type="text" id="emp-firstname">
+        </div>
+        <div class="form-group">
+          <label>Nachname</label>
+          <input type="text" id="emp-lastname">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>E-Mail (Login)</label>
+        <input type="email" id="emp-email" placeholder="vorname@tushita.de">
+      </div>
+      <div class="form-group" id="emp-password-group">
+        <label>Passwort</label>
+        <input type="text" id="emp-password" placeholder="Wird automatisch gesetzt, falls leer">
+        <div style="font-size:12px;color:var(--text-mute);margin-top:4px;">Standard: tushita123 (kann später geändert werden)</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bereich</label>
+          <select id="emp-area">
+            <option value="service">Service</option>
+            <option value="kueche">Küche</option>
+            <option value="both">Beides</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Soll-Stunden / Monat</label>
+          <input type="number" id="emp-hours" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Telefon (optional)</label>
+        <input type="tel" id="emp-phone">
+      </div>
+      <div class="form-group">
+        <label>Notiz (optional)</label>
+        <textarea id="emp-note" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="emp-delete-btn" onclick="deleteEmployee()" style="display:none;margin-right:auto;">Löschen</button>
+      <button class="btn btn-secondary" onclick="closeModal('employee-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveEmployee()" style="background:var(--accent);color:white;">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schicht-Typen Editor Modal -->
+<div class="modal-overlay" id="templates-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">Schicht-Typen verwalten</div>
+      <button class="modal-close" onclick="closeModal('templates-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--info-soft);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--text);margin-bottom:14px;">
+        Bearbeite Name, Zeiten und Farbe deiner Schicht-Typen. Bestehende Schichten behalten ihre Werte — bei Farb-Änderung wird neu eingefärbt.
+      </div>
+
+      <div style="display:flex;gap:4px;background:var(--surface-2);border-radius:10px;padding:4px;margin-bottom:16px;">
+        <button id="tpl-area-service" class="tpl-area-btn active" onclick="switchTemplateArea('service')" style="flex:1;padding:8px;border-radius:7px;font-weight:700;font-size:12px;letter-spacing:0.3px;">SERVICE</button>
+        <button id="tpl-area-kueche" class="tpl-area-btn" onclick="switchTemplateArea('kueche')" style="flex:1;padding:8px;border-radius:7px;font-weight:700;font-size:12px;letter-spacing:0.3px;">KÜCHE</button>
+      </div>
+
+      <div id="templates-list"></div>
+
+      <button onclick="addNewTemplate()" style="width:100%;margin-top:10px;padding:10px;border:1.5px dashed var(--border);border-radius:10px;color:var(--accent-dark);font-weight:600;font-size:13px;cursor:pointer;background:transparent;transition:all 0.15s;">
+        + Neuen Schicht-Typ hinzufügen
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('templates-modal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Modal -->
+<div class="modal-overlay" id="publish-modal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <div class="modal-title">Dienstplan veröffentlichen</div>
+      <button class="modal-close" onclick="closeModal('publish-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="publish-modal-body"></div>
+    <div class="modal-footer" id="publish-modal-footer"></div>
+  </div>
+</div>
+
+<!-- Copy Period Modal -->
+<div class="modal-overlay" id="copy-period-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title">Vorlage kopieren</div>
+      <button class="modal-close" onclick="closeModal('copy-period-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--info-soft);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text);margin-bottom:18px;">
+        <b>Tipp:</b> Kopiere einen kompletten Monats- oder Wochenplan auf eine andere Periode. Die Schichten werden samt Mitarbeiter-Zuordnung übernommen — wahlweise auch ohne Zuordnung.
+      </div>
+      <div class="form-group">
+        <label>Was kopieren</label>
+        <select id="copy-mode">
+          <option value="month">Ganzer Monat</option>
+          <option value="week">Ganze Woche</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quelle</label>
+        <input type="month" id="copy-source-month">
+        <input type="date" id="copy-source-week" style="display:none;">
+      </div>
+      <div class="form-group">
+        <label>Ziel</label>
+        <input type="month" id="copy-target-month">
+        <input type="date" id="copy-target-week" style="display:none;">
+      </div>
+      <div class="form-group">
+        <label>Bereich</label>
+        <select id="copy-area">
+          <option value="current">Nur aktueller Bereich</option>
+          <option value="both">Beide Bereiche (Service + Küche)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);">
+          <input type="checkbox" id="copy-keep-employees" checked style="width:auto;">
+          Mitarbeiter-Zuordnung übernehmen
+        </label>
+        <div style="font-size:12px;color:var(--text-mute);margin-top:4px;">Wenn deaktiviert, werden alle kopierten Schichten als "Unbesetzt" angelegt.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('copy-period-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="doCopyPeriod()" style="background:var(--accent);color:white;">Kopieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal-overlay" id="password-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Passwort ändern</div>
+      <button class="modal-close" onclick="closeModal('password-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" id="old-password-group">
+        <label>Altes Passwort</label>
+        <input type="password" id="old-password">
+      </div>
+      <div class="form-group">
+        <label>Neues Passwort</label>
+        <input type="password" id="new-password">
+      </div>
+      <div class="form-group">
+        <label>Neues Passwort wiederholen</label>
+        <input type="password" id="new-password-2">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('password-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="changePassword()" style="background:var(--accent);color:white;">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="context-menu" id="context-menu"></div>
+<div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+// ===== STATE =====
+const STORAGE_KEY = 'tushita-dienstplan-v3';
+
+const DEFAULT_STATE = {
+  area: 'service',
+  view: 'month',
+  cursorDate: '2026-05-18',
+  employees: [],
+  shifts: [],
+  shiftTemplatesByArea: {
+    service: [
+      { id: 'frueh',       label: 'Frühschicht',           start: '09:00', end: '14:00', color: '#F2D2D6' },
+      { id: 'mittag',      label: 'Mittagsschicht',        start: '11:45', end: '16:00', color: '#DFDAB0' },
+      { id: 'mittag-kurz', label: 'Mittagsschicht (kurz)', start: '12:00', end: '16:00', color: '#E8D49C' },
+      { id: 'spaet',       label: 'Spätschicht',           start: '16:00', end: '20:30', color: '#E0DDD2' },
+      { id: 'spaet-lang',  label: 'Spätschicht (lang)',    start: '14:00', end: '20:30', color: '#E0DDD2' },
+      { id: 'ganztag',     label: 'Ganzer Tag',            start: '10:45', end: '19:30', color: '#C8DEE6' },
+      { id: 'open',        label: 'Open End Schicht',      start: '11:30', end: '16:00', color: '#C5D8E3' },
+      { id: 'cleaning',    label: 'Cleaning',              start: '19:30', end: '21:30', color: '#ECEAE0' }
+    ],
+    kueche: [
+      { id: 'backen',   label: 'Backen',             start: '05:00', end: '08:00', color: '#F2D2D6' },
+      { id: 'kochen',   label: 'Kochen',             start: '08:00', end: '11:30', color: '#DFDAB0' },
+      { id: 'putzen',   label: 'Putzdienst',         start: '11:30', end: '13:00', color: '#F4D89B' },
+      { id: 'lieferung',label: 'Rest der Lieferung', start: '12:00', end: '13:00', color: '#F4D89B' }
+    ]
+  },
+  swapRequests: [],
+  setupDone: false,
+  currentSession: null
+};
+
+let state = loadState();
+let editingShiftId = null;
+let editingEmployeeId = null;
+let viewingProfileId = null;
+let selectedShiftType = null;
+let passwordChangeTarget = null;
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const merged = { ...DEFAULT_STATE, ...parsed };
+      // Sanfte Migration: ergänze color-Feld bei alten Templates
+      if (merged.shiftTemplatesByArea) {
+        ['service', 'kueche'].forEach(area => {
+          if (!merged.shiftTemplatesByArea[area] || merged.shiftTemplatesByArea[area].length === 0) {
+            merged.shiftTemplatesByArea[area] = DEFAULT_STATE.shiftTemplatesByArea[area];
+          } else {
+            merged.shiftTemplatesByArea[area] = merged.shiftTemplatesByArea[area].map(t => {
+              if (!t.color) {
+                // Map alte class-Felder auf Default-Farben
+                const colorMap = {
+                  'frueh': '#F2D2D6', 'mittag': '#DFDAB0', 'mittag-kurz': '#E8D49C',
+                  'spaet': '#E0DDD2', 'ganztag': '#C8DEE6', 'open': '#C5D8E3',
+                  'cleaning': '#ECEAE0', 'putz': '#F4D89B'
+                };
+                t.color = colorMap[t.class] || '#E8E4DC';
+              }
+              return t;
+            });
+          }
+        });
+      } else {
+        merged.shiftTemplatesByArea = DEFAULT_STATE.shiftTemplatesByArea;
+      }
+      return merged;
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+let _saveTimer = null;
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    flashSaveIndicator();
+    return true;
+  } catch (e) {
+    console.error('Speichern fehlgeschlagen:', e);
+    toast('⚠ Speichern fehlgeschlagen! Browser-Speicher voll oder blockiert.');
+    const ind = document.getElementById('save-indicator');
+    if (ind) {
+      ind.style.background = '#FCE8E8';
+      ind.style.color = 'var(--danger-dark)';
+      ind.innerHTML = '<span class="dot" style="background:var(--danger-dark);"></span><span>Fehler</span>';
+    }
+    return false;
+  }
+}
+
+function flashSaveIndicator() {
+  const ind = document.getElementById('save-indicator');
+  if (!ind) return;
+  ind.classList.add('saving');
+  ind.innerHTML = '<span class="dot"></span><span>Speichert…</span>';
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    ind.classList.remove('saving');
+    ind.innerHTML = '<span class="dot"></span><span>Gespeichert</span>';
+    setTimeout(() => {
+      ind.innerHTML = '<span class="dot"></span><span>Auto-Save</span>';
+    }, 1500);
+  }, 300);
+}
+
+// ===== UTIL =====
+const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DAYS_SHORT = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const DAYS_LONG = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+
+// Deutsche gesetzliche Feiertage (bundesweit) 2025-2027
+const HOLIDAYS = {
+  // 2025
+  '2025-01-01': 'Neujahr',
+  '2025-04-18': 'Karfreitag',
+  '2025-04-21': 'Ostermontag',
+  '2025-05-01': 'Tag der Arbeit',
+  '2025-05-29': 'Christi Himmelfahrt',
+  '2025-06-09': 'Pfingstmontag',
+  '2025-10-03': 'Tag der Deutschen Einheit',
+  '2025-12-25': '1. Weihnachtstag',
+  '2025-12-26': '2. Weihnachtstag',
+  // 2026
+  '2026-01-01': 'Neujahr',
+  '2026-04-03': 'Karfreitag',
+  '2026-04-06': 'Ostermontag',
+  '2026-05-01': 'Tag der Arbeit',
+  '2026-05-14': 'Christi Himmelfahrt',
+  '2026-05-25': 'Pfingstmontag',
+  '2026-10-03': 'Tag der Deutschen Einheit',
+  '2026-12-25': '1. Weihnachtstag',
+  '2026-12-26': '2. Weihnachtstag',
+  // 2027
+  '2027-01-01': 'Neujahr',
+  '2027-03-26': 'Karfreitag',
+  '2027-03-29': 'Ostermontag',
+  '2027-05-01': 'Tag der Arbeit',
+  '2027-05-06': 'Christi Himmelfahrt',
+  '2027-05-17': 'Pfingstmontag',
+  '2027-10-03': 'Tag der Deutschen Einheit',
+  '2027-12-25': '1. Weihnachtstag',
+  '2027-12-26': '2. Weihnachtstag'
+};
+
+function getHoliday(dateStr) { return HOLIDAYS[dateStr] || null; }
+
+function parseDate(s) { return new Date(s + 'T00:00:00'); }
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function todayStr() {
+  // App ist auf 2026 datiert
+  const now = new Date();
+  // Falls reales heute nicht 2026, verwenden wir 2026-05-18 als "heute"
+  if (now.getFullYear() !== 2026) return '2026-05-18';
+  return formatDate(now);
+}
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function getMonthGrid(dateStr) {
+  const d = parseDate(dateStr);
+  const year = d.getFullYear(), month = d.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startDay = (firstDay.getDay() + 6) % 7;
+  const start = new Date(firstDay);
+  start.setDate(start.getDate() - startDay);
+  const days = [];
+  for (let i = 0; i < 42; i++) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    days.push({ date: formatDate(day), inMonth: day.getMonth() === month, dow: (day.getDay()+6)%7 });
+  }
+  return days;
+}
+
+function getWeekGrid(dateStr) {
+  const d = parseDate(dateStr);
+  const dow = (d.getDay() + 6) % 7;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - dow);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    days.push({ date: formatDate(day), inMonth: true, dow: i });
+  }
+  return days;
+}
+
+function getWeekNumber(dateStr) {
+  const d = parseDate(dateStr);
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
+}
+
+function avatarColor(name) {
+  const colors = ['var(--av-1)','var(--av-2)','var(--av-3)','var(--av-4)','var(--av-5)','var(--av-6)','var(--av-7)','var(--av-8)'];
+  let h = 0;
+  for (const c of (name || '?')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+  return colors[Math.abs(h) % colors.length];
+}
+
+function initials(emp) {
+  if (!emp) return '?';
+  const f = (emp.firstname || '').trim();
+  const l = (emp.lastname || '').trim();
+  return ((f[0] || '') + (l[0] || '')).toUpperCase() || '?';
+}
+
+function fullName(emp) {
+  if (!emp) return '';
+  return [emp.firstname, emp.lastname].filter(Boolean).join(' ');
+}
+
+function shortName(emp) {
+  if (!emp) return '';
+  const last = (emp.lastname || '').trim();
+  return [emp.firstname, last ? last[0] : ''].filter(Boolean).join(' ');
+}
+
+function diffHours(start, end) {
+  if (!start || !end) return 0;
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins < 0) mins += 24 * 60;
+  return mins / 60;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function getShiftTemplates() {
+  return (state.shiftTemplatesByArea && state.shiftTemplatesByArea[state.area]) || [];
+}
+
+function findTemplate(templateId) {
+  // Erst im aktuellen Bereich suchen, dann in allen Bereichen
+  for (const area in (state.shiftTemplatesByArea || {})) {
+    const found = state.shiftTemplatesByArea[area].find(t => t.id === templateId);
+    if (found) return found;
+  }
+  return null;
+}
+
+// ===== AUTH =====
+function isAdmin() { return state.currentSession && state.currentSession.role === 'admin'; }
+function currentUser() {
+  if (!state.currentSession) return null;
+  if (state.currentSession.role === 'admin' && state.currentSession.employeeId === 'admin') {
+    return { id: 'admin', firstname: 'Admin', lastname: '', email: state.currentSession.email, isAdmin: true };
+  }
+  return state.employees.find(e => e.id === state.currentSession.employeeId);
+}
+
+function showLogin() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').classList.add('show');
+
+  const isSetup = !state.setupDone;
+  document.getElementById('login-title').textContent = isSetup ? 'Willkommen bei Tushita' : 'Anmelden';
+  document.getElementById('login-subtitle').textContent = isSetup ? 'Lege deinen Admin-Account an' : 'Mit deiner E-Mail-Adresse anmelden';
+  document.getElementById('login-submit').textContent = isSetup ? 'Konto anlegen' : 'Anmelden';
+  document.getElementById('login-hint').style.display = isSetup ? 'block' : 'none';
+  document.getElementById('login-name-group').style.display = isSetup ? 'block' : 'none';
+  document.getElementById('login-name-group-2').style.display = isSetup ? 'block' : 'none';
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+
+  if (!state.setupDone) {
+    const firstname = document.getElementById('login-firstname').value.trim();
+    const lastname = document.getElementById('login-lastname').value.trim();
+    if (!firstname) { showLoginError('Bitte Vornamen eingeben.'); return; }
+    if (!email || !password) { showLoginError('E-Mail und Passwort erforderlich.'); return; }
+    if (password.length < 4) { showLoginError('Passwort muss mind. 4 Zeichen lang sein.'); return; }
+
+    state.admin = { firstname, lastname, email, password };
+    state.setupDone = true;
+    state.currentSession = { employeeId: 'admin', role: 'admin', email };
+    saveState();
+    enterApp();
+    toast('Admin-Konto angelegt — willkommen!');
+    return;
+  }
+
+  // Admin check
+  if (state.admin && state.admin.email === email && state.admin.password === password) {
+    state.currentSession = { employeeId: 'admin', role: 'admin', email };
+    saveState();
+    enterApp();
+    return;
+  }
+
+  // Employee check
+  const emp = state.employees.find(e => (e.email || '').toLowerCase() === email);
+  if (!emp) { showLoginError('Kein Konto mit dieser E-Mail gefunden.'); return; }
+  if ((emp.password || 'tushita123') !== password) { showLoginError('Falsches Passwort.'); return; }
+  state.currentSession = { employeeId: emp.id, role: 'employee', email };
+  saveState();
+  enterApp();
+}
+
+function showLoginError(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = msg;
+  e.classList.add('show');
+}
+
+function logout() {
+  state.currentSession = null;
+  saveState();
+  hideContextMenu();
+  showLogin();
+}
+
+function enterApp() {
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('app').style.display = 'block';
+  applyRolePermissions();
+  renderAll();
+}
+
+function applyRolePermissions() {
+  const admin = isAdmin();
+  const user = currentUser();
+
+  // Update user pill
+  document.getElementById('user-avatar').textContent = initials(user);
+  document.getElementById('user-avatar').style.background = avatarColor(fullName(user) || 'admin');
+  document.getElementById('user-name').textContent = admin ? (fullName(user) || 'Admin') : fullName(user);
+  document.getElementById('user-role').innerHTML = `<span class="role-badge ${admin?'admin':'employee'}">${admin ? 'ADMIN' : 'MITARBEITER'}</span>`;
+
+  // Hide admin-only buttons
+  document.getElementById('add-employee-btn').style.display = admin ? '' : 'none';
+  document.getElementById('add-employee-btn-2').style.display = admin ? '' : 'none';
+  document.getElementById('new-shift-btn').style.display = admin ? '' : 'none';
+  document.getElementById('export-btn').style.display = admin ? '' : 'none';
+  document.getElementById('import-btn').style.display = admin ? '' : 'none';
+  document.getElementById('copy-period-btn').style.display = admin ? '' : 'none';
+  document.getElementById('publish-btn').style.display = admin ? '' : 'none';
+  document.getElementById('templates-btn').style.display = admin ? '' : 'none';
+  document.getElementById('info-banner-employee').style.display = admin ? 'none' : 'flex';
+}
+
+function showUserMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('context-menu');
+  const admin = isAdmin();
+  const user = currentUser();
+  menu.innerHTML = `
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border-soft);margin-bottom:4px;">
+      <div style="font-weight:600;">${escapeHtml(fullName(user) || 'Admin')}</div>
+      <div style="font-size:12px;color:var(--text-mute);">${escapeHtml(state.currentSession.email)}</div>
+    </div>
+    ${user && user.id !== 'admin' ? `<button onclick="viewProfile('${user.id}');hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Mein Profil
+    </button>` : ''}
+    <button onclick="openPasswordModal('self');hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Passwort ändern
+    </button>
+    <hr>
+    <button class="danger" onclick="logout();hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Abmelden
+    </button>
+  `;
+  const rect = event.currentTarget.getBoundingClientRect();
+  menu.style.left = (rect.right - 220) + 'px';
+  menu.style.top = (rect.bottom + 8) + 'px';
+  menu.classList.add('show');
+}
+
+// ===== PASSWORD =====
+function openPasswordModal(target) {
+  passwordChangeTarget = target;
+  document.getElementById('old-password').value = '';
+  document.getElementById('new-password').value = '';
+  document.getElementById('new-password-2').value = '';
+  document.getElementById('old-password-group').style.display = target === 'self' ? 'block' : 'none';
+  document.getElementById('password-modal').classList.add('show');
+}
+
+function changePassword() {
+  const newPw = document.getElementById('new-password').value;
+  const newPw2 = document.getElementById('new-password-2').value;
+
+  if (newPw.length < 4) { toast('Passwort muss mind. 4 Zeichen haben.'); return; }
+  if (newPw !== newPw2) { toast('Passwörter stimmen nicht überein.'); return; }
+
+  if (passwordChangeTarget === 'self') {
+    const oldPw = document.getElementById('old-password').value;
+    if (isAdmin() && state.currentSession.employeeId === 'admin') {
+      if (state.admin.password !== oldPw) { toast('Altes Passwort falsch.'); return; }
+      state.admin.password = newPw;
+    } else {
+      const emp = state.employees.find(e => e.id === state.currentSession.employeeId);
+      if (!emp) return;
+      if ((emp.password || 'tushita123') !== oldPw) { toast('Altes Passwort falsch.'); return; }
+      emp.password = newPw;
+    }
+  } else {
+    const emp = state.employees.find(e => e.id === passwordChangeTarget);
+    if (!emp) return;
+    emp.password = newPw;
+    toast(`Passwort für ${shortName(emp)} aktualisiert.`);
+  }
+  saveState();
+  closeModal('password-modal');
+  toast('Passwort aktualisiert.');
+}
+
+// ===== NAVIGATION =====
+function switchArea(area) {
+  state.area = area;
+  document.getElementById('area-service').classList.toggle('active', area === 'service');
+  document.getElementById('area-kueche').classList.toggle('active', area === 'kueche');
+  saveState();
+  renderAll();
+}
+
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'employees') renderEmployeesGrid();
+  if (view === 'tausch') renderTausch();
+  if (view === 'time') renderTime();
+}
+
+function setView(view) {
+  state.view = view;
+  document.getElementById('vt-month').classList.toggle('active', view === 'month');
+  document.getElementById('vt-week').classList.toggle('active', view === 'week');
+  saveState();
+  renderSchedule();
+}
+
+function navigateDate(dir) {
+  const d = parseDate(state.cursorDate);
+  if (state.view === 'month') d.setMonth(d.getMonth() + dir);
+  else d.setDate(d.getDate() + 7 * dir);
+  state.cursorDate = formatDate(d);
+  saveState();
+  renderSchedule();
+}
+
+function goToToday() {
+  state.cursorDate = todayStr();
+  saveState();
+  renderSchedule();
+}
+
+// ===== SIDEBAR =====
+function renderSidebar() {
+  const list = document.getElementById('employee-list');
+  const search = (document.getElementById('emp-search').value || '').toLowerCase();
+  const empsForArea = state.employees.filter(e => e.area === state.area || e.area === 'both');
+  const filtered = empsForArea.filter(e => fullName(e).toLowerCase().includes(search));
+  const myId = state.currentSession?.employeeId;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="padding:24px 12px;text-align:center;color:var(--text-mute);font-size:13px;">
+      ${empsForArea.length === 0 ? 'Noch keine Mitarbeiter.' : 'Keine Treffer.'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(e => {
+    const planned = plannedHoursForEmployee(e.id);
+    const target = e.hours || 0;
+    const status = target > 0 ? (planned >= target ? 'ok' : 'warn') : '';
+    const isMe = e.id === myId;
+    return `
+      <div class="employee-row ${isMe?'you':''}" onclick="viewProfile('${e.id}')">
+        <div class="avatar online" style="background:${avatarColor(fullName(e))};">${initials(e)}</div>
+        <div class="emp-info">
+          <div class="emp-name">${shortName(e)}${isMe?' <span style="color:var(--accent-dark);font-size:11px;">(Du)</span>':''}</div>
+          <div class="emp-hours"><span class="${status}">${planned.toFixed(2).replace('.', ',')}</span> / ${target.toFixed(2).replace('.', ',')}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function plannedHoursForEmployee(empId) {
+  const d = parseDate(state.cursorDate);
+  const month = d.getMonth(), year = d.getFullYear();
+  let total = 0;
+  state.shifts.forEach(s => {
+    if (s.employeeId !== empId) return;
+    if (s.area !== state.area) return;
+    const sd = parseDate(s.date);
+    if (sd.getMonth() === month && sd.getFullYear() === year) {
+      total += diffHours(s.start, s.end);
+    }
+  });
+  return total;
+}
+
+// ===== SCHEDULE =====
+function renderSchedule() {
+  const d = parseDate(state.cursorDate);
+  const container = document.getElementById('schedule-container');
+  container.className = 'schedule-container ' + (state.view === 'month' ? 'schedule-month' : 'schedule-week');
+
+  if (state.view === 'month') {
+    document.getElementById('date-label').textContent = MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    renderMonthView(container);
+  } else {
+    const week = getWeekGrid(state.cursorDate);
+    const first = parseDate(week[0].date);
+    const last = parseDate(week[6].date);
+    document.getElementById('date-label').textContent =
+      `KW ${getWeekNumber(state.cursorDate)} · ${first.getDate()}.${first.getMonth()+1}. – ${last.getDate()}.${last.getMonth()+1}.${last.getFullYear()}`;
+    renderWeekView(container, week);
+  }
+}
+
+function renderMonthView(container) {
+  const days = getMonthGrid(state.cursorDate);
+  const today = todayStr();
+  let html = '<div class="schedule-grid">';
+
+  DAYS_SHORT.forEach((d, i) => {
+    html += `<div class="day-header ${i>=5?'weekend':''}" style="min-height:auto;padding:8px;">${d}</div>`;
+  });
+
+  days.forEach(d => {
+    const isToday = d.date === today;
+    const dateObj = parseDate(d.date);
+    const shifts = getShiftsForDay(d.date);
+    const isWeekend = d.dow >= 5;
+    const holiday = getHoliday(d.date);
+    const cellClass = holiday ? 'holiday-cell' : (isWeekend ? 'weekend-cell' : '');
+
+    html += `<div class="day-cell ${d.inMonth ? '' : 'other-month'} ${isToday?'today-cell':''} ${cellClass}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-weight:700;font-size:13px;color:${isToday ? 'var(--accent-dark)' : (isWeekend || holiday)?'var(--text)':'var(--text)'};">${dateObj.getDate()}.</span>
+        ${isToday ? '<span style="font-size:10px;color:var(--accent-dark);font-weight:700;letter-spacing:0.3px;">HEUTE</span>' : ''}
+        ${holiday && !isToday ? `<span style="font-size:9px;color:#8A6628;font-weight:700;letter-spacing:0.3px;" title="${escapeHtml(holiday)}">FEIERTAG</span>` : ''}
+      </div>
+      ${holiday ? `<div style="font-size:10px;color:var(--text-soft);font-weight:600;margin-bottom:2px;line-height:1.2;">${escapeHtml(holiday)}</div>` : ''}
+      ${shifts.map(s => renderShiftCard(s)).join('')}
+      ${isAdmin() ? `<div class="add-shift" onclick="openShiftModal(null, '${d.date}')">Schicht</div>` : ''}
+    </div>`;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderWeekView(container, week) {
+  const today = todayStr();
+  let html = '<div class="schedule-grid">';
+
+  week.forEach(d => {
+    const isToday = d.date === today;
+    const dateObj = parseDate(d.date);
+    const isWeekend = d.dow >= 5;
+    const holiday = getHoliday(d.date);
+    const headerClass = holiday ? 'holiday' : (isWeekend ? 'weekend' : '');
+    html += `<div class="day-header ${isToday ? 'today' : ''} ${headerClass}">
+      ${DAYS_LONG[d.dow]}<br>
+      <span class="date-num">${String(dateObj.getDate()).padStart(2,'0')}.${String(dateObj.getMonth()+1).padStart(2,'0')}.</span>
+      ${holiday ? `<span class="holiday-name">${escapeHtml(holiday)}</span>` : ''}
+    </div>`;
+  });
+
+  html += `<div class="section-label">${state.area === 'service' ? 'Service' : 'Küche'}</div>`;
+
+  week.forEach(d => {
+    const shifts = getShiftsForDay(d.date);
+    const isWeekend = d.dow >= 5;
+    const isToday = d.date === today;
+    const holiday = getHoliday(d.date);
+    const cellClass = holiday ? 'holiday-cell' : (isWeekend ? 'weekend-cell' : '');
+    html += `<div class="day-cell ${cellClass} ${isToday?'today-cell':''}" style="min-height:300px;">
+      ${shifts.map(s => renderShiftCard(s)).join('')}
+      ${isAdmin() ? `<div class="add-shift" onclick="openShiftModal(null, '${d.date}')">Schicht erstellen</div>` : ''}
+    </div>`;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function getShiftsForDay(date) {
+  const myId = state.currentSession?.employeeId;
+  return state.shifts
+    .filter(s => {
+      if (s.date !== date || s.area !== state.area) return false;
+      if (isAdmin()) return true;
+      // Mitarbeiter: nur veröffentlichte Schichten oder eigene
+      return s.status === 'published' || s.employeeId === myId;
+    })
+    .sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+}
+
+function isShiftMine(s) {
+  return state.currentSession && s.employeeId === state.currentSession.employeeId;
+}
+
+function isShiftOnSwap(s) {
+  return state.swapRequests.some(r => r.shiftId === s.id && r.status === 'open');
+}
+
+function renderShiftCard(s) {
+  const tpl = findTemplate(s.templateId);
+  const bgColor = tpl?.color || '#E0DDD2';
+  const label = s.label || (tpl ? tpl.label : 'Schicht');
+  const emp = state.employees.find(e => e.id === s.employeeId);
+  const empLabel = emp ? shortName(emp) : '<em style="opacity:.7;">Unbesetzt</em>';
+  const mine = isShiftMine(s);
+  const swap = isShiftOnSwap(s);
+  const isDraft = s.status === 'draft' || s.status === 'modified';
+  const statusTag = s.status === 'draft' ? 'ENTWURF' : (s.status === 'modified' ? 'GEÄNDERT' : '');
+
+  let tags = '';
+  if (mine) tags += '<span class="shift-tag mine">DU</span>';
+  if (swap) tags += '<span class="shift-tag tausch">TAUSCH</span>';
+  if (isDraft && isAdmin()) tags += `<span class="shift-tag draft">${statusTag}</span>`;
+
+  return `<div class="shift ${s.employeeId ? '' : 'unassigned'} ${mine?'mine':''} ${isDraft&&isAdmin()?'draft':''}"
+       style="background:${bgColor};"
+       title="${escapeHtml(label)} · ${s.start}–${s.end} · ${emp ? fullName(emp) : 'Unbesetzt'}${isDraft?' · '+statusTag:''}"
+       onclick="event.stopPropagation();openShiftModal('${s.id}')"
+       oncontextmenu="event.preventDefault();showShiftContextMenu(event,'${s.id}')">
+    <div class="shift-title">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(label)}${tags}</span>
+      <span class="shift-slot">${s.employeeId ? '1/1' : '0/1'}</span>
+    </div>
+    <div class="shift-time">
+      <span>${s.start || '--:--'} – ${s.end || '--:--'}</span>
+    </div>
+    <div class="shift-employee">${empLabel}</div>
+  </div>`;
+}
+
+// ===== SHIFT MODAL =====
+function openShiftModal(shiftId, date) {
+  editingShiftId = shiftId;
+  const shift = shiftId ? state.shifts.find(s => s.id === shiftId) : null;
+  const admin = isAdmin();
+  const myId = state.currentSession?.employeeId;
+
+  // Mitarbeiter darf nur eigene Schichten / Unbesetzte (für Tausch übernehmen) anschauen
+  if (!admin) {
+    renderShiftModalEmployee(shift);
+    document.getElementById('shift-modal').classList.add('show');
+    return;
+  }
+
+  // Admin: vollwertiges Form
+  document.getElementById('shift-modal-title').textContent = shift ? 'Schicht bearbeiten' : 'Schicht erstellen';
+
+  const statusBanner = shift ? (
+    shift.status === 'published'
+      ? `<div style="background:var(--accent-soft);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent-dark);margin-bottom:14px;display:flex;align-items:center;gap:8px;"><b>✓ Veröffentlicht</b>${shift.publishedAt?' am '+new Date(shift.publishedAt).toLocaleDateString('de-DE'):''}</div>`
+      : shift.status === 'modified'
+      ? `<div style="background:var(--warning-soft);border-radius:8px;padding:8px 12px;font-size:12px;color:#8A6628;margin-bottom:14px;"><b>⚠ Geändert</b> — muss erneut veröffentlicht werden</div>`
+      : `<div style="background:var(--surface-2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-soft);margin-bottom:14px;"><b>📝 Entwurf</b> — wird Mitarbeitern erst nach Veröffentlichung angezeigt</div>`
+  ) : `<div style="background:var(--surface-2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-soft);margin-bottom:14px;"><b>📝 Neue Schichten</b> werden als Entwurf angelegt und müssen veröffentlicht werden.</div>`;
+
+  const body = document.getElementById('shift-modal-body');
+  body.innerHTML = `
+    ${statusBanner}
+    <div class="form-group">
+      <label>Schichttyp</label>
+      <div class="shift-type-grid" id="shift-type-grid"></div>
+    </div>
+    <div class="form-group">
+      <label>Bezeichnung <span style="text-transform:none;color:var(--text-mute);font-weight:400;">(z.B. "Ofen putzen", "Regale putzen")</span></label>
+      <input type="text" id="shift-label" placeholder="Standard-Bezeichnung wird aus Schichttyp übernommen">
+    </div>
+    <div class="form-group">
+      <label>Datum</label>
+      <input type="date" id="shift-date">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Von</label>
+        <input type="time" id="shift-start">
+      </div>
+      <div class="form-group">
+        <label>Bis</label>
+        <input type="time" id="shift-end">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Mitarbeiter</label>
+      <select id="shift-employee">
+        <option value="">— Unbesetzt —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Notiz (optional)</label>
+      <textarea id="shift-note" rows="2"></textarea>
+    </div>
+  `;
+
+  const footer = document.getElementById('shift-modal-footer');
+  footer.innerHTML = `
+    ${shift ? '<button class="btn btn-danger" onclick="deleteShift()" style="margin-right:auto;">Löschen</button>' : ''}
+    ${shift ? '<button class="btn btn-ghost" onclick="copyShift()">Kopieren</button>' : ''}
+    <button class="btn btn-secondary" onclick="closeModal(\'shift-modal\')">Abbrechen</button>
+    <button class="btn btn-primary" onclick="saveShift()" style="background:var(--accent);color:white;">Speichern</button>
+  `;
+
+  // Populate
+  const templates = getShiftTemplates();
+  const grid = document.getElementById('shift-type-grid');
+  grid.innerHTML = templates.map(t => `
+    <button type="button" class="shift-type-option" style="background:${t.color || '#E0DDD2'};" data-tid="${t.id}" onclick="selectShiftType('${t.id}')">
+      <div class="label">${escapeHtml(t.label)}</div>
+      <div class="time">${t.start} – ${t.end}</div>
+    </button>
+  `).join('');
+
+  const sel = document.getElementById('shift-employee');
+  const empsForArea = state.employees.filter(e => e.area === state.area || e.area === 'both');
+  sel.innerHTML = '<option value="">— Unbesetzt —</option>' +
+    empsForArea.map(e => `<option value="${e.id}">${shortName(e)}</option>`).join('');
+
+  if (shift) {
+    selectedShiftType = shift.templateId;
+    selectShiftType(shift.templateId, false);
+    document.getElementById('shift-date').value = shift.date;
+    document.getElementById('shift-start').value = shift.start || '';
+    document.getElementById('shift-end').value = shift.end || '';
+    document.getElementById('shift-employee').value = shift.employeeId || '';
+    document.getElementById('shift-note').value = shift.note || '';
+    document.getElementById('shift-label').value = shift.customLabel || '';
+  } else if (templates.length > 0) {
+    selectedShiftType = templates[0].id;
+    selectShiftType(templates[0].id);
+    document.getElementById('shift-date').value = date || state.cursorDate;
+    document.getElementById('shift-employee').value = '';
+    document.getElementById('shift-note').value = '';
+    document.getElementById('shift-label').value = '';
+  }
+
+  document.getElementById('shift-modal').classList.add('show');
+}
+
+function renderShiftModalEmployee(shift) {
+  if (!shift) { closeModal('shift-modal'); return; }
+  const myId = state.currentSession.employeeId;
+  const mine = shift.employeeId === myId;
+  const swapReq = state.swapRequests.find(r => r.shiftId === shift.id && r.status === 'open');
+  const tpl = findTemplate(shift.templateId);
+  const emp = state.employees.find(e => e.id === shift.employeeId);
+
+  document.getElementById('shift-modal-title').textContent = 'Schichtdetails';
+
+  const body = document.getElementById('shift-modal-body');
+  body.innerHTML = `
+    <div style="background:var(--surface-2);padding:16px;border-radius:10px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:18px;font-weight:600;">${escapeHtml(shift.label || (tpl?tpl.label:'Schicht'))}</div>
+        ${mine?'<span class="shift-tag mine">DU</span>':''}
+        ${swapReq?'<span class="shift-tag tausch">ZUM TAUSCH</span>':''}
+      </div>
+      <div style="color:var(--text-soft);font-size:13px;">
+        <div>${new Date(shift.date).toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</div>
+        <div style="margin-top:4px;">${shift.start} – ${shift.end} · ${diffHours(shift.start,shift.end).toFixed(2).replace('.',',')}h</div>
+        <div style="margin-top:4px;">Bereich: ${shift.area === 'kueche' ? 'Küche' : 'Service'}</div>
+        <div style="margin-top:4px;">Mitarbeiter: ${emp ? fullName(emp) : '<em>Unbesetzt</em>'}</div>
+        ${shift.note?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">Notiz: ${escapeHtml(shift.note)}</div>`:''}
+      </div>
+    </div>
+    ${mine && !swapReq ? `
+      <div style="background:var(--warning-soft);padding:14px;border-radius:10px;border-left:3px solid var(--warning);">
+        <div style="font-weight:600;margin-bottom:6px;">Schicht zum Tausch stellen?</div>
+        <div style="font-size:13px;color:var(--text-soft);margin-bottom:10px;">Kollegen können deine Schicht dann übernehmen.</div>
+        <textarea id="swap-note" placeholder="Notiz (optional, z.B. Grund für Tausch)" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;"></textarea>
+      </div>
+    ` : ''}
+    ${swapReq && mine ? `
+      <div style="background:var(--warning-soft);padding:14px;border-radius:10px;border-left:3px solid var(--warning);">
+        <div style="font-weight:600;">Diese Schicht steht zum Tausch.</div>
+        <div style="font-size:13px;color:var(--text-soft);margin-top:4px;">Du kannst die Tauschanfrage zurückziehen.</div>
+        ${swapReq.note?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px;">Deine Notiz: ${escapeHtml(swapReq.note)}</div>`:''}
+      </div>
+    ` : ''}
+    ${swapReq && !mine && shift.employeeId !== myId ? `
+      <div style="background:var(--accent-soft);padding:14px;border-radius:10px;border-left:3px solid var(--accent);">
+        <div style="font-weight:600;">Du kannst diese Schicht übernehmen.</div>
+        <div style="font-size:13px;color:var(--text-soft);margin-top:4px;">Mit Klick auf "Übernehmen" geht die Schicht auf dich über.</div>
+        ${swapReq.note?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px;">Notiz: ${escapeHtml(swapReq.note)}</div>`:''}
+      </div>
+    ` : ''}
+  `;
+
+  const footer = document.getElementById('shift-modal-footer');
+  let buttons = '';
+  if (mine && !swapReq) {
+    buttons += `<button class="btn btn-warning" onclick="requestSwap('${shift.id}')">Zum Tausch stellen</button>`;
+  } else if (swapReq && mine) {
+    buttons += `<button class="btn btn-secondary" onclick="cancelSwap('${swapReq.id}')">Tauschanfrage zurückziehen</button>`;
+  } else if (swapReq && !mine && shift.employeeId !== myId) {
+    buttons += `<button class="btn btn-primary" style="background:var(--accent);color:white;" onclick="takeSwap('${swapReq.id}')">Übernehmen</button>`;
+  }
+  footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('shift-modal')">Schließen</button>${buttons}`;
+}
+
+function selectShiftType(tid, autoFill = true) {
+  selectedShiftType = tid;
+  document.querySelectorAll('.shift-type-option').forEach(b => {
+    b.classList.toggle('selected', b.dataset.tid === tid);
+  });
+  if (autoFill) {
+    const t = findTemplate(tid);
+    if (t) {
+      document.getElementById('shift-start').value = t.start;
+      document.getElementById('shift-end').value = t.end;
+    }
+  }
+}
+
+function saveShift() {
+  const date = document.getElementById('shift-date').value;
+  const start = document.getElementById('shift-start').value;
+  const end = document.getElementById('shift-end').value;
+  const employeeId = document.getElementById('shift-employee').value || null;
+  const note = document.getElementById('shift-note').value;
+  const customLabel = document.getElementById('shift-label').value.trim();
+  const tpl = findTemplate(selectedShiftType);
+  const label = customLabel || (tpl ? tpl.label : 'Schicht');
+
+  if (!date) { toast('Bitte ein Datum auswählen.'); return; }
+  if (!start || !end) { toast('Bitte Start- und Endzeit angeben.'); return; }
+
+  if (editingShiftId) {
+    const s = state.shifts.find(x => x.id === editingShiftId);
+    // Beim Bearbeiten: zurück auf Entwurf, falls die Schicht schon veröffentlicht war
+    const wasPublished = s.status === 'published';
+    Object.assign(s, { date, start, end, employeeId, note, templateId: selectedShiftType, label, customLabel });
+    if (wasPublished) s.status = 'modified'; // veröffentlicht aber geändert
+    toast(wasPublished ? 'Schicht aktualisiert (muss erneut veröffentlicht werden)' : 'Schicht aktualisiert');
+  } else {
+    state.shifts.push({
+      id: uid(), area: state.area,
+      date, start, end, employeeId, note,
+      templateId: selectedShiftType,
+      label, customLabel,
+      status: 'draft',
+      createdAt: new Date().toISOString()
+    });
+    toast('Schicht als Entwurf erstellt');
+  }
+  saveState();
+  closeModal('shift-modal');
+  renderAll();
+}
+
+function deleteShift() {
+  if (!editingShiftId) return;
+  if (!confirm('Diese Schicht wirklich löschen?')) return;
+  state.shifts = state.shifts.filter(s => s.id !== editingShiftId);
+  state.swapRequests = state.swapRequests.filter(r => r.shiftId !== editingShiftId);
+  saveState();
+  closeModal('shift-modal');
+  renderAll();
+  toast('Schicht gelöscht');
+}
+
+function copyShift() {
+  if (!editingShiftId) return;
+  const orig = state.shifts.find(s => s.id === editingShiftId);
+  if (!orig) return;
+  state.shifts.push({ ...orig, id: uid() });
+  saveState();
+  closeModal('shift-modal');
+  renderAll();
+  toast('Schicht kopiert');
+}
+
+// ===== SWAP / TAUSCH =====
+function requestSwap(shiftId) {
+  const note = document.getElementById('swap-note')?.value || '';
+  state.swapRequests.push({
+    id: uid(),
+    shiftId,
+    fromEmployeeId: state.currentSession.employeeId,
+    createdAt: new Date().toISOString(),
+    note,
+    status: 'open'
+  });
+  saveState();
+  closeModal('shift-modal');
+  renderAll();
+  toast('Schicht zum Tausch gestellt.');
+}
+
+function cancelSwap(swapId) {
+  state.swapRequests = state.swapRequests.filter(r => r.id !== swapId);
+  saveState();
+  closeModal('shift-modal');
+  renderAll();
+  toast('Tauschanfrage zurückgezogen.');
+}
+
+function takeSwap(swapId) {
+  const req = state.swapRequests.find(r => r.id === swapId);
+  if (!req) return;
+  const shift = state.shifts.find(s => s.id === req.shiftId);
+  if (!shift) return;
+  if (!confirm(`Schicht am ${new Date(shift.date).toLocaleDateString('de-DE')} (${shift.start}-${shift.end}) übernehmen?`)) return;
+  shift.employeeId = state.currentSession.employeeId;
+  req.status = 'taken';
+  req.takenBy = state.currentSession.employeeId;
+  req.takenAt = new Date().toISOString();
+  saveState();
+  closeModal('shift-modal');
+  renderAll();
+  toast('Schicht übernommen!');
+}
+
+// ===== SHIFT CONTEXT MENU =====
+function showShiftContextMenu(event, shiftId) {
+  if (!isAdmin()) return;
+  const menu = document.getElementById('context-menu');
+  menu.innerHTML = `
+    <button onclick="openShiftModal('${shiftId}');hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Bearbeiten
+    </button>
+    <button onclick="quickCopyShift('${shiftId}');hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Kopieren
+    </button>
+    <button onclick="duplicateToNextWeek('${shiftId}');hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+      In nächste Woche kopieren
+    </button>
+    <hr>
+    <button class="danger" onclick="quickDeleteShift('${shiftId}');hideContextMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      Löschen
+    </button>
+  `;
+  menu.style.left = event.clientX + 'px';
+  menu.style.top = event.clientY + 'px';
+  menu.classList.add('show');
+}
+
+function hideContextMenu() { document.getElementById('context-menu').classList.remove('show'); }
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.context-menu') && !e.target.closest('.shift') && !e.target.closest('.user-pill') && !e.target.closest('.card-menu')) hideContextMenu();
+});
+
+function quickCopyShift(id) {
+  const o = state.shifts.find(s => s.id === id); if (!o) return;
+  state.shifts.push({ ...o, id: uid(), status: 'draft', createdAt: new Date().toISOString() });
+  saveState(); renderAll(); toast('Schicht kopiert (Entwurf)');
+}
+function duplicateToNextWeek(id) {
+  const o = state.shifts.find(s => s.id === id); if (!o) return;
+  const d = parseDate(o.date); d.setDate(d.getDate() + 7);
+  state.shifts.push({ ...o, id: uid(), date: formatDate(d), status: 'draft', createdAt: new Date().toISOString() });
+  saveState(); renderAll(); toast('In nächste Woche kopiert (Entwurf)');
+}
+function quickDeleteShift(id) {
+  if (!confirm('Diese Schicht wirklich löschen?')) return;
+  state.shifts = state.shifts.filter(s => s.id !== id);
+  state.swapRequests = state.swapRequests.filter(r => r.shiftId !== id);
+  saveState(); renderAll(); toast('Schicht gelöscht');
+}
+
+// ===== EMPLOYEE MODAL =====
+function openEmployeeModal(empId) {
+  if (!isAdmin()) return;
+  editingEmployeeId = empId || null;
+  const emp = empId ? state.employees.find(e => e.id === empId) : null;
+  document.getElementById('employee-modal-title').textContent = emp ? 'Mitarbeiter bearbeiten' : 'Mitarbeiter anlegen';
+  document.getElementById('emp-delete-btn').style.display = emp ? '' : 'none';
+
+  document.getElementById('emp-firstname').value = emp?.firstname || '';
+  document.getElementById('emp-lastname').value = emp?.lastname || '';
+  document.getElementById('emp-email').value = emp?.email || '';
+  document.getElementById('emp-password').value = emp?.password || '';
+  document.getElementById('emp-area').value = emp?.area || state.area;
+  document.getElementById('emp-hours').value = emp?.hours || 0;
+  document.getElementById('emp-phone').value = emp?.phone || '';
+  document.getElementById('emp-note').value = emp?.note || '';
+
+  document.getElementById('employee-modal').classList.add('show');
+}
+
+function saveEmployee() {
+  const firstname = document.getElementById('emp-firstname').value.trim();
+  const lastname = document.getElementById('emp-lastname').value.trim();
+  const email = document.getElementById('emp-email').value.trim().toLowerCase();
+  const password = document.getElementById('emp-password').value || 'tushita123';
+
+  if (!firstname && !lastname) { toast('Bitte einen Namen angeben.'); return; }
+  if (!email) { toast('Bitte eine E-Mail angeben (für Login).'); return; }
+
+  // Eindeutigkeit prüfen
+  const dup = state.employees.find(e => (e.email||'').toLowerCase() === email && e.id !== editingEmployeeId);
+  if (dup) { toast('Diese E-Mail wird bereits verwendet.'); return; }
+  if (state.admin && state.admin.email === email) { toast('Diese E-Mail wird vom Admin verwendet.'); return; }
+
+  const data = {
+    firstname, lastname, email, password,
+    area: document.getElementById('emp-area').value,
+    hours: parseFloat(document.getElementById('emp-hours').value) || 0,
+    phone: document.getElementById('emp-phone').value.trim(),
+    note: document.getElementById('emp-note').value.trim()
+  };
+
+  if (editingEmployeeId) {
+    const emp = state.employees.find(e => e.id === editingEmployeeId);
+    Object.assign(emp, data);
+    toast('Mitarbeiter aktualisiert');
+  } else {
+    state.employees.push({ id: uid(), createdAt: todayStr(), ...data });
+    toast(`Mitarbeiter angelegt. Login: ${email} / ${password}`);
+  }
+  saveState();
+  closeModal('employee-modal');
+  renderAll();
+}
+
+function deleteEmployee() {
+  if (!editingEmployeeId) return;
+  if (!confirm('Mitarbeiter wirklich löschen? Zugewiesene Schichten werden auf "Unbesetzt" gesetzt.')) return;
+  state.employees = state.employees.filter(e => e.id !== editingEmployeeId);
+  state.shifts.forEach(s => { if (s.employeeId === editingEmployeeId) s.employeeId = null; });
+  state.swapRequests = state.swapRequests.filter(r => r.fromEmployeeId !== editingEmployeeId);
+  saveState();
+  closeModal('employee-modal');
+  if (viewingProfileId === editingEmployeeId) switchView('employees');
+  renderAll();
+  toast('Mitarbeiter gelöscht');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ===== EMPLOYEES GRID =====
+function renderEmployeesGrid() {
+  const grid = document.getElementById('employees-grid');
+  const search = (document.getElementById('emp-search-2').value || '').toLowerCase();
+  const filtered = state.employees.filter(e =>
+    (e.area === state.area || e.area === 'both') &&
+    (fullName(e).toLowerCase().includes(search) || (e.email || '').toLowerCase().includes(search))
+  );
+  const myId = state.currentSession?.employeeId;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div>Noch keine Mitarbeiter im Bereich ${state.area === 'service' ? 'Service' : 'Küche'}.</div>
+      ${isAdmin() ? '<button class="btn-primary" style="margin-top:16px;" onclick="openEmployeeModal()">+ Mitarbeiter anlegen</button>' : ''}
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(e => `
+    <div class="employee-card ${e.id===myId?'is-you':''}" onclick="viewProfile('${e.id}')">
+      ${isAdmin() ? `<button class="card-menu" onclick="event.stopPropagation();openEmployeeModal('${e.id}')" title="Bearbeiten">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </button>` : ''}
+      <div class="avatar online" style="background:${avatarColor(fullName(e))};">${initials(e)}</div>
+      <div class="emp-name">${escapeHtml(fullName(e))}${e.id===myId?' <span style="color:var(--accent-dark);">(Du)</span>':''}</div>
+      <div class="emp-role">${e.area === 'kueche' ? 'Küche' : e.area === 'both' ? 'Service & Küche' : 'Service'}</div>
+      <div class="emp-badge">${e.area === 'kueche' ? 'Kü' : 'Ser'}</div>
+      ${e.email ? `<div style="margin-top:14px;font-size:13px;color:var(--accent-dark);">${escapeHtml(e.email)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ===== PROFILE VIEW =====
+function viewProfile(empId) {
+  viewingProfileId = empId;
+  const emp = state.employees.find(e => e.id === empId);
+  if (!emp) return;
+  const isMine = empId === state.currentSession?.employeeId;
+  const canEdit = isAdmin() || isMine;
+  const planned = plannedHoursForEmployee(empId);
+
+  document.getElementById('profile-card-content').innerHTML = `
+    <div class="avatar online" style="background:${avatarColor(fullName(emp))};">${initials(emp)}</div>
+    <div class="name">${escapeHtml(fullName(emp))}${isMine?' <span style="color:var(--accent-dark);font-size:14px;">(Du)</span>':''}</div>
+    <div class="role">${emp.area === 'kueche' ? 'Küche' : emp.area === 'both' ? 'Service & Küche' : 'Service'}</div>
+    <div style="font-size:12px;color:var(--text-mute);margin-top:8px;">
+      Angelegt am ${emp.createdAt ? new Date(emp.createdAt).toLocaleDateString('de-DE') : '—'}
+    </div>
+    <div style="margin-top:16px;padding:12px;background:var(--surface-2);border-radius:10px;">
+      <div style="font-size:11px;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.5px;">Geplante Stunden (${MONTHS[parseDate(state.cursorDate).getMonth()]})</div>
+      <div style="font-size:22px;font-weight:700;margin-top:4px;">${planned.toFixed(2).replace('.', ',')}h</div>
+      <div style="font-size:12px;color:var(--text-soft);">von ${(emp.hours || 0).toFixed(2).replace('.', ',')}h / Monat</div>
+    </div>
+    ${canEdit ? `<div class="profile-actions">
+      ${isAdmin() ? `<button class="action-circle green" onclick="openEmployeeModal('${emp.id}')" title="Bearbeiten">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>` : ''}
+      <button class="action-circle gray" onclick="openPasswordModal(${isMine?"'self'":`'${emp.id}'`})" title="Passwort">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
+      ${isAdmin() && !isMine ? `<button class="action-circle red" onclick="(function(){editingEmployeeId='${emp.id}';deleteEmployee();})()" title="Löschen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>` : ''}
+    </div>` : ''}
+  `;
+
+  const readOnly = !canEdit;
+  document.getElementById('profile-details-content').innerHTML = `
+    <h3 style="margin-bottom:20px;font-size:18px;">Stammdaten</h3>
+    <div class="profile-form-grid">
+      <div class="form-group">
+        <label>Vorname</label>
+        <input type="text" value="${escapeHtml(emp.firstname || '')}" ${readOnly?'readonly':''} onchange="updateEmpField('${emp.id}','firstname',this.value)">
+      </div>
+      <div class="form-group">
+        <label>Nachname</label>
+        <input type="text" value="${escapeHtml(emp.lastname || '')}" ${readOnly?'readonly':''} onchange="updateEmpField('${emp.id}','lastname',this.value)">
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" value="${escapeHtml(emp.email || '')}" ${isAdmin()?'':'readonly'} onchange="updateEmpField('${emp.id}','email',this.value)">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="tel" value="${escapeHtml(emp.phone || '')}" ${readOnly?'readonly':''} onchange="updateEmpField('${emp.id}','phone',this.value)">
+      </div>
+      <div class="form-group">
+        <label>Bereich</label>
+        <select ${isAdmin()?'':'disabled'} onchange="updateEmpField('${emp.id}','area',this.value)">
+          <option value="service" ${emp.area==='service'?'selected':''}>Service</option>
+          <option value="kueche" ${emp.area==='kueche'?'selected':''}>Küche</option>
+          <option value="both" ${emp.area==='both'?'selected':''}>Beides</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Soll-Stunden / Monat</label>
+        <input type="number" value="${emp.hours || 0}" ${isAdmin()?'':'readonly'} onchange="updateEmpField('${emp.id}','hours',parseFloat(this.value)||0)">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:18px;">
+      <label>Notiz</label>
+      <textarea rows="3" ${readOnly?'readonly':''} onchange="updateEmpField('${emp.id}','note',this.value)">${escapeHtml(emp.note || '')}</textarea>
+    </div>
+    <h3 style="margin:24px 0 12px;font-size:16px;">Schichten (${MONTHS[parseDate(state.cursorDate).getMonth()]} ${parseDate(state.cursorDate).getFullYear()})</h3>
+    <div id="profile-shifts"></div>
+  `;
+
+  const d = parseDate(state.cursorDate);
+  const month = d.getMonth(), year = d.getFullYear();
+  const empShifts = state.shifts
+    .filter(s => s.employeeId === empId && parseDate(s.date).getMonth()===month && parseDate(s.date).getFullYear()===year)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const psDiv = document.getElementById('profile-shifts');
+  if (empShifts.length === 0) {
+    psDiv.innerHTML = '<div style="color:var(--text-mute);font-size:13px;padding:12px 0;">Keine Schichten in diesem Monat.</div>';
+  } else {
+    psDiv.innerHTML = empShifts.map(s => `
+      <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--surface-2);margin-bottom:6px;">
+        <span><b>${new Date(s.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</b> · ${escapeHtml(s.label || 'Schicht')}</span>
+        <span>${s.start} – ${s.end} · <span style="color:var(--text-mute);">${diffHours(s.start,s.end).toFixed(1)}h</span></span>
+      </div>
+    `).join('');
+  }
+
+  switchView('profile');
+}
+
+function updateEmpField(id, field, value) {
+  const e = state.employees.find(x => x.id === id);
+  if (!e) return;
+  e[field] = value;
+  saveState();
+  renderSidebar();
+  toast('Gespeichert');
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const cursor = parseDate(state.cursorDate);
+  const wcDiv = document.getElementById('week-cards');
+
+  const weeks = [];
+  for (let i = 0; i < 4; i++) {
+    const d = new Date(cursor);
+    d.setDate(d.getDate() + i * 7);
+    const wn = getWeekNumber(formatDate(d));
+    const weekShifts = getShiftsInWeek(formatDate(d));
+    const totalSlots = weekShifts.length;
+    const filledSlots = weekShifts.filter(s => s.employeeId).length;
+    const pct = totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
+    weeks.push({ wn, pct, filled: filledSlots, total: totalSlots });
+  }
+
+  wcDiv.innerHTML = weeks.map(w => `
+    <div class="week-card">
+      <div class="week-card-head">
+        <div class="week-card-title">KW ${w.wn}</div>
+        <div class="week-card-pct">${w.pct} %</div>
+      </div>
+      <div class="progress"><div class="progress-bar" style="width:${w.pct}%"></div></div>
+      <div style="font-size:12px;color:var(--text-soft);margin-top:8px;">${w.filled} / ${w.total} Schichten besetzt</div>
+    </div>
+  `).join('');
+
+  const empsForArea = state.employees.filter(e => e.area === state.area || e.area === 'both');
+  const shiftsForArea = state.shifts.filter(s => s.area === state.area);
+  const unassigned = shiftsForArea.filter(s => !s.employeeId).length;
+  const openSwaps = state.swapRequests.filter(r => r.status === 'open').length;
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-number">${empsForArea.length}</div><div class="stat-label">Mitarbeiter</div></div>
+    <div class="stat-card"><div class="stat-number">${shiftsForArea.length}</div><div class="stat-label">Schichten gesamt</div></div>
+    <div class="stat-card"><div class="stat-number">${unassigned}</div><div class="stat-label">Unbesetzt</div></div>
+    <div class="stat-card"><div class="stat-number">${openSwaps}</div><div class="stat-label">Offene Tauschanfragen</div></div>
+  `;
+}
+
+function getShiftsInWeek(dateStr) {
+  const week = getWeekGrid(dateStr).map(d => d.date);
+  return state.shifts.filter(s => s.area === state.area && week.includes(s.date));
+}
+
+// ===== TAUSCH =====
+function renderTausch() {
+  const content = document.getElementById('tausch-content');
+  const open = state.swapRequests.filter(r => r.status === 'open');
+  const taken = state.swapRequests.filter(r => r.status === 'taken').slice(-10);
+
+  // Badge update
+  const badge = document.getElementById('tausch-badge');
+  if (open.length > 0) {
+    badge.textContent = open.length;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  if (open.length === 0 && taken.length === 0) {
+    content.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      <div>Aktuell keine Tauschanfragen.</div>
+    </div>`;
+    return;
+  }
+
+  const myId = state.currentSession?.employeeId;
+  let html = '';
+
+  if (open.length > 0) {
+    html += '<h3 style="margin-bottom:12px;font-size:15px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;">Offen</h3>';
+    open.forEach(r => {
+      const shift = state.shifts.find(s => s.id === r.shiftId);
+      if (!shift) return;
+      const emp = state.employees.find(e => e.id === r.fromEmployeeId);
+      const tpl = state.shiftTemplates.find(t => t.id === shift.templateId);
+      const isMine = r.fromEmployeeId === myId;
+      const canTake = !isMine && (isAdmin() ? false : true);
+
+      html += `<div class="tausch-card">
+        <div class="avatar" style="width:48px;height:48px;font-size:14px;background:${avatarColor(fullName(emp))};">${initials(emp)}</div>
+        <div class="tausch-info">
+          <div style="font-weight:600;">${escapeHtml(fullName(emp) || 'Unbekannt')} sucht Tausch</div>
+          <div class="tausch-shift-info">
+            <div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg> ${new Date(shift.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+            <div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${shift.start} – ${shift.end}</div>
+            <div><span class="shift-tag" style="background:var(--${tpl?'shift-'+tpl.class:'surface-2'});color:var(--text);">${escapeHtml(tpl?tpl.label:'Schicht')}</span></div>
+            <div><span style="color:var(--text-mute);">Bereich: ${shift.area === 'kueche' ? 'Küche' : 'Service'}</span></div>
+          </div>
+          ${r.note?`<div style="margin-top:8px;font-size:13px;background:var(--surface-2);padding:8px 12px;border-radius:8px;color:var(--text-soft);">"${escapeHtml(r.note)}"</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${isMine ? `<button class="btn btn-secondary" onclick="cancelSwap('${r.id}')">Zurückziehen</button>` : ''}
+          ${canTake ? `<button class="btn btn-primary" style="background:var(--accent);color:white;" onclick="takeSwap('${r.id}')">Übernehmen</button>` : ''}
+          ${isAdmin() ? `<button class="btn btn-secondary" onclick="cancelSwap('${r.id}')">Ablehnen</button>` : ''}
+        </div>
+      </div>`;
+    });
+  }
+
+  if (taken.length > 0) {
+    html += '<h3 style="margin:24px 0 12px;font-size:15px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;">Erledigt</h3>';
+    taken.forEach(r => {
+      const shift = state.shifts.find(s => s.id === r.shiftId);
+      if (!shift) return;
+      const emp = state.employees.find(e => e.id === r.fromEmployeeId);
+      const taker = state.employees.find(e => e.id === r.takenBy);
+      html += `<div class="tausch-card taken">
+        <div class="avatar" style="width:48px;height:48px;font-size:14px;background:${avatarColor(fullName(taker))};">${initials(taker)}</div>
+        <div class="tausch-info">
+          <div style="font-weight:600;">${escapeHtml(shortName(emp) || '?')} → ${escapeHtml(shortName(taker) || '?')}</div>
+          <div class="tausch-shift-info">
+            <div>${new Date(shift.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+            <div>${shift.start} – ${shift.end}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  content.innerHTML = html;
+}
+
+// ===== TIME =====
+let timeMode = 'list';
+
+function setTimeMode(mode) {
+  timeMode = mode;
+  document.getElementById('time-mode-list').classList.toggle('active', mode === 'list');
+  document.getElementById('time-mode-person').classList.toggle('active', mode === 'person');
+  // Style update
+  ['time-mode-list', 'time-mode-person'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.classList.contains('active')) {
+      el.style.background = 'var(--surface)';
+      el.style.color = 'var(--text)';
+      el.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+    } else {
+      el.style.background = '';
+      el.style.color = 'var(--text-soft)';
+      el.style.boxShadow = '';
+    }
+  });
+  renderTime();
+}
+
+function renderTime() {
+  const cursor = parseDate(state.cursorDate);
+  const month = cursor.getMonth(), year = cursor.getFullYear();
+  let monthShifts = state.shifts.filter(s => {
+    if (s.area !== state.area) return false;
+    const d = parseDate(s.date);
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+
+  if (!isAdmin()) {
+    const myId = state.currentSession.employeeId;
+    monthShifts = monthShifts.filter(s => s.employeeId === myId);
+  }
+
+  const total = monthShifts.reduce((a, s) => a + diffHours(s.start, s.end), 0);
+  document.getElementById('time-total').textContent = total.toFixed(1).replace('.', ',') + 'h';
+  document.getElementById('time-label').textContent = `Geplante Stunden in ${MONTHS[month]} ${year} (${state.area === 'kueche' ? 'Küche' : 'Service'})`;
+
+  // Toggle nur für Admin sinnvoll
+  if (!isAdmin()) {
+    document.getElementById('time-mode-list').parentElement.style.display = 'none';
+  }
+
+  if (timeMode === 'person' && isAdmin()) {
+    renderTimePerPerson(monthShifts, month, year);
+  } else {
+    renderTimeList(monthShifts, month, year);
+  }
+}
+
+function renderTimeList(monthShifts, month, year) {
+  if (monthShifts.length === 0) {
+    document.getElementById('time-list').innerHTML = `<div class="empty-state" style="background:var(--surface);border-radius:14px;">
+      <div>Keine geplanten Zeiten in ${MONTHS[month]} ${year}.</div>
+    </div>`;
+    return;
+  }
+
+  const sorted = [...monthShifts].sort((a,b) => a.date.localeCompare(b.date) || (a.start||'').localeCompare(b.start||''));
+  document.getElementById('time-list').innerHTML = `
+    <div style="background:var(--surface);border-radius:14px;overflow:hidden;border:1px solid var(--border-soft);">
+      <div style="display:grid;grid-template-columns:1.5fr 1fr 1.5fr 1fr 1fr;padding:14px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-soft);font-weight:700;border-bottom:1px solid var(--border-soft);">
+        <div>Mitarbeiter</div><div>Datum</div><div>Uhrzeit</div><div>Schicht</div><div>Stunden</div>
+      </div>
+      ${sorted.map(s => {
+        const emp = state.employees.find(e => e.id === s.employeeId);
+        const tpl = findTemplate(s.templateId);
+        return `<div style="display:grid;grid-template-columns:1.5fr 1fr 1.5fr 1fr 1fr;padding:11px 16px;border-bottom:1px solid var(--border-soft);align-items:center;font-size:13px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${emp ? `<div class="avatar" style="width:28px;height:28px;font-size:10.5px;background:${avatarColor(fullName(emp))};">${initials(emp)}</div>` : '<div style="width:28px;height:28px;border-radius:50%;background:var(--surface-2);"></div>'}
+            <span>${emp ? shortName(emp) : '<em style="color:var(--text-mute);">Unbesetzt</em>'}</span>
+          </div>
+          <div>${new Date(s.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</div>
+          <div>${s.start} – ${s.end}</div>
+          <div><span style="padding:2px 8px;border-radius:5px;font-size:11.5px;font-weight:600;background:${tpl?.color || 'var(--surface-2)'};">${escapeHtml(s.label || '')}</span></div>
+          <div><b>${diffHours(s.start,s.end).toFixed(2).replace('.', ',')}</b></div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderTimePerPerson(monthShifts, month, year) {
+  const empsForArea = state.employees.filter(e => e.area === state.area || e.area === 'both');
+
+  if (empsForArea.length === 0) {
+    document.getElementById('time-list').innerHTML = `<div class="empty-state" style="background:var(--surface);border-radius:14px;">
+      <div>Keine Mitarbeiter in diesem Bereich.</div>
+    </div>`;
+    return;
+  }
+
+  const cards = empsForArea.map(emp => {
+    const empShifts = monthShifts.filter(s => s.employeeId === emp.id)
+      .sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+    const total = empShifts.reduce((a, s) => a + diffHours(s.start, s.end), 0);
+    const target = emp.hours || 0;
+    const diff = total - target;
+    const pct = target > 0 ? Math.min(100, Math.round((total / target) * 100)) : 0;
+    const statusColor = target === 0 ? 'var(--text-mute)' : (diff >= 0 ? 'var(--accent-dark)' : 'var(--danger-dark)');
+
+    return `<div style="background:var(--surface);border-radius:14px;border:1px solid var(--border-soft);overflow:hidden;">
+      <div style="padding:14px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border-soft);">
+        <div class="avatar online" style="background:${avatarColor(fullName(emp))};">${initials(emp)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:15px;">${escapeHtml(fullName(emp))}</div>
+          <div style="font-size:12px;color:var(--text-mute);">${emp.area === 'kueche' ? 'Küche' : emp.area === 'both' ? 'Service & Küche' : 'Service'} ${emp.email ? '· ' + escapeHtml(emp.email) : ''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px;font-weight:700;color:${statusColor};line-height:1;">${total.toFixed(2).replace('.', ',')}h</div>
+          <div style="font-size:11.5px;color:var(--text-soft);margin-top:2px;">${target > 0 ? `von ${target.toFixed(2).replace('.', ',')}h Soll` : 'Kein Soll definiert'}</div>
+          ${target > 0 ? `<div style="font-size:11px;font-weight:700;margin-top:4px;color:${statusColor};">${diff >= 0 ? '+' : ''}${diff.toFixed(2).replace('.', ',')}h</div>` : ''}
+        </div>
+      </div>
+      ${target > 0 ? `<div style="height:4px;background:var(--surface-2);">
+        <div style="height:100%;background:${statusColor};width:${pct}%;transition:width 0.3s;"></div>
+      </div>` : ''}
+      ${empShifts.length === 0
+        ? `<div style="padding:14px 18px;color:var(--text-mute);font-size:13px;">Keine Schichten in diesem Monat.</div>`
+        : `<div style="padding:8px 12px;">
+            ${empShifts.map(s => {
+              const tpl = findTemplate(s.templateId);
+              const d = new Date(s.date);
+              return `<div style="display:grid;grid-template-columns:30px 90px 1fr 100px 60px;align-items:center;padding:6px 8px;border-radius:8px;font-size:12.5px;gap:6px;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+                <div style="width:8px;height:8px;border-radius:2px;background:${tpl?.color || 'var(--surface-2)'};margin-left:8px;"></div>
+                <div style="color:var(--text-soft);font-weight:600;">${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</div>
+                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.label || '')}</div>
+                <div style="color:var(--text-soft);">${s.start} – ${s.end}</div>
+                <div style="text-align:right;font-weight:700;">${diffHours(s.start, s.end).toFixed(2).replace('.', ',')}h</div>
+              </div>`;
+            }).join('')}
+          </div>`
+      }
+    </div>`;
+  }).join('');
+
+  document.getElementById('time-list').innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;">${cards}</div>`;
+}
+
+// ===== TEMPLATE EDITOR =====
+let templateEditingArea = 'service';
+
+function openTemplatesModal() {
+  if (!isAdmin()) return;
+  templateEditingArea = state.area;
+  switchTemplateArea(templateEditingArea);
+  document.getElementById('templates-modal').classList.add('show');
+}
+
+function switchTemplateArea(area) {
+  templateEditingArea = area;
+  document.getElementById('tpl-area-service').classList.toggle('active', area === 'service');
+  document.getElementById('tpl-area-kueche').classList.toggle('active', area === 'kueche');
+  renderTemplatesList();
+}
+
+function renderTemplatesList() {
+  const list = document.getElementById('templates-list');
+  const templates = state.shiftTemplatesByArea[templateEditingArea] || [];
+
+  if (templates.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-mute);padding:24px 0;font-size:13px;">Noch keine Schicht-Typen für diesen Bereich.</div>';
+    return;
+  }
+
+  list.innerHTML = templates.map((t, idx) => `
+    <div class="tpl-row" data-idx="${idx}">
+      <label class="tpl-color-swatch" style="background:${t.color};" title="Farbe ändern">
+        <input type="color" value="${t.color}" onchange="updateTemplate(${idx}, 'color', this.value); this.parentElement.style.background=this.value;">
+      </label>
+      <input type="text" class="tpl-name" value="${escapeHtml(t.label)}" placeholder="Bezeichnung" onchange="updateTemplate(${idx}, 'label', this.value)">
+      <input type="time" class="tpl-time" value="${t.start}" onchange="updateTemplate(${idx}, 'start', this.value)">
+      <input type="time" class="tpl-time" value="${t.end}" onchange="updateTemplate(${idx}, 'end', this.value)">
+      <button class="tpl-delete" onclick="deleteTemplate(${idx})" title="Löschen">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function updateTemplate(idx, field, value) {
+  const tpl = state.shiftTemplatesByArea[templateEditingArea][idx];
+  if (!tpl) return;
+  tpl[field] = value;
+  saveState();
+  renderSchedule(); // Schichten in der aktuellen Ansicht neu rendern (Farbe könnte sich geändert haben)
+}
+
+function addNewTemplate() {
+  const newId = 'custom-' + uid();
+  state.shiftTemplatesByArea[templateEditingArea].push({
+    id: newId,
+    label: 'Neue Schicht',
+    start: '09:00',
+    end: '12:00',
+    color: '#DDD9C7'
+  });
+  saveState();
+  renderTemplatesList();
+  toast('Neuer Schicht-Typ hinzugefügt');
+}
+
+function deleteTemplate(idx) {
+  const tpl = state.shiftTemplatesByArea[templateEditingArea][idx];
+  if (!tpl) return;
+  // Prüfe ob noch Schichten existieren mit diesem Template
+  const usingCount = state.shifts.filter(s => s.templateId === tpl.id).length;
+  if (usingCount > 0) {
+    if (!confirm(`Es gibt ${usingCount} Schichten mit diesem Typ "${tpl.label}". Diese behalten ihre Werte, lassen sich aber nicht mehr neu zuordnen. Trotzdem löschen?`)) return;
+  } else {
+    if (!confirm(`Schicht-Typ "${tpl.label}" wirklich löschen?`)) return;
+  }
+  state.shiftTemplatesByArea[templateEditingArea].splice(idx, 1);
+  saveState();
+  renderTemplatesList();
+  renderSchedule();
+  toast('Schicht-Typ gelöscht');
+}
+
+// ===== PUBLISH =====
+function getCurrentPeriodDates() {
+  if (state.view === 'week') {
+    return getWeekGrid(state.cursorDate).map(d => d.date);
+  } else {
+    const d = parseDate(state.cursorDate);
+    const year = d.getFullYear(), month = d.getMonth();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const dates = [];
+    for (let i = 1; i <= daysInMonth; i++) dates.push(formatDate(new Date(year, month, i)));
+    return dates;
+  }
+}
+
+function getDraftShiftsInPeriod() {
+  const dates = getCurrentPeriodDates();
+  return state.shifts.filter(s =>
+    s.area === state.area &&
+    dates.includes(s.date) &&
+    (s.status === 'draft' || s.status === 'modified')
+  );
+}
+
+function getAllDraftsInPeriod() {
+  // Auch in beiden Bereichen prüfen für die Anzeige
+  const dates = getCurrentPeriodDates();
+  return state.shifts.filter(s =>
+    dates.includes(s.date) &&
+    (s.status === 'draft' || s.status === 'modified')
+  );
+}
+
+function updateDraftBadge() {
+  const badge = document.getElementById('draft-badge');
+  if (!badge) return;
+  const drafts = getDraftShiftsInPeriod();
+  if (drafts.length > 0) {
+    badge.textContent = drafts.length;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openPublishModal() {
+  if (!isAdmin()) return;
+  const drafts = getDraftShiftsInPeriod();
+  const cursor = parseDate(state.cursorDate);
+  const periodLabel = state.view === 'week'
+    ? `KW ${getWeekNumber(state.cursorDate)} (${getWeekGrid(state.cursorDate)[0].date.split('-').reverse().slice(0,2).reverse().join('.')}–${getWeekGrid(state.cursorDate)[6].date.split('-').reverse().slice(0,2).reverse().join('.')}.${cursor.getFullYear()})`
+    : `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`;
+
+  // Sammle betroffene Mitarbeiter (mit E-Mail)
+  const affectedIds = new Set();
+  drafts.forEach(s => { if (s.employeeId) affectedIds.add(s.employeeId); });
+  const affected = state.employees.filter(e => affectedIds.has(e.id) && e.email);
+  // Bei "Bereich Service" - auch Service-Mitarbeiter ohne Schicht benachrichtigen? Hier: nur direkt betroffene.
+
+  const body = document.getElementById('publish-modal-body');
+  const footer = document.getElementById('publish-modal-footer');
+
+  if (drafts.length === 0) {
+    body.innerHTML = `<div style="text-align:center;padding:24px 0;">
+      <div style="font-size:48px;margin-bottom:8px;">✓</div>
+      <div style="font-size:16px;font-weight:600;color:var(--accent-dark);">Alles veröffentlicht</div>
+      <div style="color:var(--text-soft);margin-top:6px;">Keine Entwürfe in <b>${escapeHtml(periodLabel)}</b> für Bereich ${state.area === 'kueche' ? 'Küche' : 'Service'}.</div>
+    </div>`;
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('publish-modal')">Schließen</button>`;
+    document.getElementById('publish-modal').classList.add('show');
+    return;
+  }
+
+  // Vorschau der E-Mail
+  const adminName = state.admin ? `${state.admin.firstname || ''} ${state.admin.lastname || ''}`.trim() : 'Tushita Team';
+  const subject = `Neuer Dienstplan – ${periodLabel} (Tushita ${state.area === 'kueche' ? 'Küche' : 'Service'})`;
+  const body_lines = [
+    `Hallo,`,
+    ``,
+    `der Dienstplan für ${periodLabel} (Bereich ${state.area === 'kueche' ? 'Küche' : 'Service'}) wurde soeben veröffentlicht.`,
+    ``,
+    `Bitte schau dir deine Schichten an und melde dich bei Fragen oder wenn du tauschen möchtest.`,
+    ``,
+    `Übersicht der Schichten:`,
+    ...drafts.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start))
+      .map(s => {
+        const emp = state.employees.find(e => e.id === s.employeeId);
+        const dStr = new Date(s.date).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' });
+        return `  • ${dStr}  ${s.start}–${s.end}  ${s.label || ''}  →  ${emp ? fullName(emp) : 'unbesetzt'}`;
+      }),
+    ``,
+    `Liebe Grüße`,
+    adminName
+  ];
+  const emailBody = body_lines.join('\n');
+
+  body.innerHTML = `
+    <div style="background:var(--warning-soft);border-left:3px solid var(--warning);padding:12px 16px;border-radius:8px;margin-bottom:18px;">
+      <div style="font-weight:700;margin-bottom:4px;">📋 ${drafts.length} ${drafts.length === 1 ? 'Schicht' : 'Schichten'} bereit zur Veröffentlichung</div>
+      <div style="font-size:12.5px;color:var(--text-soft);">
+        Periode: <b>${escapeHtml(periodLabel)}</b> · Bereich: <b>${state.area === 'kueche' ? 'Küche' : 'Service'}</b>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">Betroffene Mitarbeiter (${affected.length})</div>
+      ${affected.length === 0
+        ? '<div style="color:var(--text-mute);font-size:13px;">Keine Mitarbeiter mit E-Mail betroffen (oder nur unbesetzte Schichten).</div>'
+        : `<div style="display:flex;flex-wrap:wrap;gap:6px;">${affected.map(e => `
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;background:var(--surface-2);border-radius:14px;font-size:12px;">
+            <div class="avatar" style="width:22px;height:22px;font-size:10px;background:${avatarColor(fullName(e))};">${initials(e)}</div>
+            <span>${escapeHtml(shortName(e))}</span>
+          </div>
+        `).join('')}</div>`
+      }
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;">📧 E-Mail-Vorschau</div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:14px;font-family:'SF Mono','Menlo',monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;max-height:240px;overflow-y:auto;">
+<b>An:</b> ${affected.map(e => escapeHtml(e.email)).join(', ') || '(keine Empfänger)'}
+<b>Betreff:</b> ${escapeHtml(subject)}
+
+${escapeHtml(emailBody)}
+      </div>
+    </div>
+
+    <details style="margin-bottom:8px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--text-soft);font-weight:600;">Schichten anzeigen (${drafts.length})</summary>
+      <div style="margin-top:8px;max-height:200px;overflow-y:auto;">
+        ${drafts.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start)).map(s => {
+          const emp = state.employees.find(e => e.id === s.employeeId);
+          return `<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--surface-2);border-radius:6px;margin-bottom:4px;font-size:12.5px;">
+            <span><b>${new Date(s.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</b> · ${escapeHtml(s.label||'')}</span>
+            <span style="color:var(--text-soft);">${s.start}–${s.end} · ${emp ? shortName(emp) : '<em style="color:var(--text-mute);">unbesetzt</em>'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </details>
+  `;
+
+  footer.innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal('publish-modal')">Abbrechen</button>
+    <button class="btn btn-ghost" onclick="publishOnly()">Nur veröffentlichen (ohne E-Mail)</button>
+    <button class="btn btn-primary" onclick="publishAndSendEmail('${encodeURIComponent(subject)}','${encodeURIComponent(emailBody)}')" style="background:var(--accent);color:white;">
+      ✉ Veröffentlichen + E-Mail senden
+    </button>
+  `;
+
+  document.getElementById('publish-modal').classList.add('show');
+}
+
+function publishOnly() {
+  const drafts = getDraftShiftsInPeriod();
+  drafts.forEach(s => { s.status = 'published'; s.publishedAt = new Date().toISOString(); });
+  saveState();
+  closeModal('publish-modal');
+  renderAll();
+  toast(`✓ ${drafts.length} Schichten veröffentlicht`);
+}
+
+function publishAndSendEmail(encodedSubject, encodedBody) {
+  const drafts = getDraftShiftsInPeriod();
+  const affectedIds = new Set();
+  drafts.forEach(s => { if (s.employeeId) affectedIds.add(s.employeeId); });
+  const affected = state.employees.filter(e => affectedIds.has(e.id) && e.email);
+  const emails = affected.map(e => e.email).join(',');
+
+  // Schichten veröffentlichen
+  drafts.forEach(s => { s.status = 'published'; s.publishedAt = new Date().toISOString(); });
+  saveState();
+  closeModal('publish-modal');
+  renderAll();
+
+  if (emails) {
+    // mailto-Link öffnen (BCC, damit Empfänger sich nicht sehen)
+    const mailto = `mailto:?bcc=${emails}&subject=${encodedSubject}&body=${encodedBody}`;
+    // Bei sehr langem mailto wird Browser eventuell stören, also kurze Fallback-Lösung
+    if (mailto.length > 1900) {
+      // Kopiere E-Mails in Zwischenablage
+      navigator.clipboard?.writeText(emails);
+      const shortMailto = `mailto:?bcc=${emails}&subject=${encodedSubject}`;
+      window.location.href = shortMailto;
+      toast(`✓ Veröffentlicht. E-Mail-Programm geöffnet. Text wurde in Zwischenablage kopiert.`);
+    } else {
+      window.location.href = mailto;
+      toast(`✓ ${drafts.length} Schichten veröffentlicht – E-Mail-Programm geöffnet`);
+    }
+  } else {
+    toast(`✓ ${drafts.length} Schichten veröffentlicht (keine E-Mail-Empfänger)`);
+  }
+}
+
+// ===== COPY PERIOD =====
+function openCopyPeriodModal() {
+  if (!isAdmin()) return;
+  const cursor = parseDate(state.cursorDate);
+  const currentMonth = `${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}`;
+
+  // Default: aktueller Monat als Quelle, nächster Monat als Ziel
+  const next = new Date(cursor);
+  next.setMonth(next.getMonth() + 1);
+  const nextMonth = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;
+
+  document.getElementById('copy-mode').value = state.view === 'week' ? 'week' : 'month';
+  document.getElementById('copy-source-month').value = currentMonth;
+  document.getElementById('copy-target-month').value = nextMonth;
+
+  // Wochen: Quelle = aktuelle Woche, Ziel = nächste Woche
+  const weekStart = getWeekGrid(state.cursorDate)[0].date;
+  const wd = parseDate(weekStart);
+  wd.setDate(wd.getDate() + 7);
+  document.getElementById('copy-source-week').value = weekStart;
+  document.getElementById('copy-target-week').value = formatDate(wd);
+
+  updateCopyModeVisibility();
+  document.getElementById('copy-mode').onchange = updateCopyModeVisibility;
+  document.getElementById('copy-period-modal').classList.add('show');
+}
+
+function updateCopyModeVisibility() {
+  const mode = document.getElementById('copy-mode').value;
+  document.getElementById('copy-source-month').style.display = mode === 'month' ? '' : 'none';
+  document.getElementById('copy-target-month').style.display = mode === 'month' ? '' : 'none';
+  document.getElementById('copy-source-week').style.display = mode === 'week' ? '' : 'none';
+  document.getElementById('copy-target-week').style.display = mode === 'week' ? '' : 'none';
+}
+
+function doCopyPeriod() {
+  const mode = document.getElementById('copy-mode').value;
+  const areaScope = document.getElementById('copy-area').value;
+  const keepEmployees = document.getElementById('copy-keep-employees').checked;
+
+  let sourceDates = [], targetDates = [];
+
+  if (mode === 'month') {
+    const src = document.getElementById('copy-source-month').value;
+    const tgt = document.getElementById('copy-target-month').value;
+    if (!src || !tgt) { toast('Bitte Quell- und Zielmonat wählen.'); return; }
+    if (src === tgt) { toast('Quelle und Ziel dürfen nicht gleich sein.'); return; }
+
+    const [sy, sm] = src.split('-').map(Number);
+    const [ty, tm] = tgt.split('-').map(Number);
+    // Tage von source month aufsammeln
+    const daysInSource = new Date(sy, sm, 0).getDate();
+    for (let i = 1; i <= daysInSource; i++) sourceDates.push(formatDate(new Date(sy, sm-1, i)));
+    // Tage von target month
+    const daysInTarget = new Date(ty, tm, 0).getDate();
+    for (let i = 1; i <= daysInTarget; i++) targetDates.push(formatDate(new Date(ty, tm-1, i)));
+  } else {
+    const src = document.getElementById('copy-source-week').value;
+    const tgt = document.getElementById('copy-target-week').value;
+    if (!src || !tgt) { toast('Bitte Quell- und Zielwoche wählen.'); return; }
+    if (src === tgt) { toast('Quelle und Ziel dürfen nicht gleich sein.'); return; }
+    sourceDates = getWeekGrid(src).map(d => d.date);
+    targetDates = getWeekGrid(tgt).map(d => d.date);
+  }
+
+  // Map source dates to target dates per day-of-week alignment
+  const sourceShifts = state.shifts.filter(s => {
+    if (areaScope === 'current' && s.area !== state.area) return false;
+    return sourceDates.includes(s.date);
+  });
+
+  if (sourceShifts.length === 0) {
+    toast('Keine Schichten in der Quellperiode gefunden.');
+    return;
+  }
+
+  // Für Monats-Kopier: gleicher Tag des Monats. Falls Ziel-Monat kürzer ist → überspringen.
+  let copiedCount = 0;
+  const newShifts = [];
+
+  if (mode === 'month') {
+    const [sy, sm] = document.getElementById('copy-source-month').value.split('-').map(Number);
+    const [ty, tm] = document.getElementById('copy-target-month').value.split('-').map(Number);
+    const daysInTarget = new Date(ty, tm, 0).getDate();
+
+    sourceShifts.forEach(s => {
+      const srcDate = parseDate(s.date);
+      const day = srcDate.getDate();
+      if (day > daysInTarget) return; // 31. existiert in einem 30er-Monat nicht
+      const newDate = formatDate(new Date(ty, tm-1, day));
+      newShifts.push({
+        ...s, id: uid(), date: newDate,
+        employeeId: keepEmployees ? s.employeeId : null,
+        status: 'draft', createdAt: new Date().toISOString()
+      });
+      copiedCount++;
+    });
+  } else {
+    // Wochen-Kopier: Day-of-week mapping
+    sourceShifts.forEach(s => {
+      const srcDow = (parseDate(s.date).getDay() + 6) % 7;
+      const targetDate = targetDates.find(td => ((parseDate(td).getDay()+6)%7) === srcDow);
+      if (!targetDate) return;
+      newShifts.push({
+        ...s, id: uid(), date: targetDate,
+        employeeId: keepEmployees ? s.employeeId : null,
+        status: 'draft', createdAt: new Date().toISOString()
+      });
+      copiedCount++;
+    });
+  }
+
+  if (!confirm(`${copiedCount} Schichten kopieren?`)) return;
+  state.shifts.push(...newShifts);
+  saveState();
+  closeModal('copy-period-modal');
+  renderAll();
+  toast(`✓ ${copiedCount} Schichten kopiert`);
+}
+
+// ===== EXPORT / IMPORT =====
+function downloadJson(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportData() {
+  if (!isAdmin()) return;
+  downloadJson(state, `tushita-dienstplan-${todayStr()}.json`);
+  toast('Daten exportiert');
+}
+
+function importData(event) {
+  if (!isAdmin()) return;
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!confirm('Aktuelle Daten überschreiben?')) return;
+      state = { ...DEFAULT_STATE, ...imported };
+      saveState();
+      renderAll();
+      toast('Daten importiert');
+    } catch (err) { toast('Datei konnte nicht gelesen werden.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderSidebar();
+  renderSchedule();
+  updateDraftBadge();
+  // Update tausch badge
+  const open = state.swapRequests.filter(r => r.status === 'open').length;
+  const badge = document.getElementById('tausch-badge');
+  if (badge) {
+    badge.textContent = open;
+    badge.style.display = open > 0 ? '' : 'none';
+  }
+  if (document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
+  if (document.getElementById('view-employees').classList.contains('active')) renderEmployeesGrid();
+  if (document.getElementById('view-tausch').classList.contains('active')) renderTausch();
+  if (document.getElementById('view-time').classList.contains('active')) renderTime();
+  if (document.getElementById('view-profile').classList.contains('active') && viewingProfileId) viewProfile(viewingProfileId);
+}
+
+// ===== INIT =====
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('show');
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+    hideContextMenu();
+  }
+});
+
+// Boot
+if (!state.setupDone || !state.currentSession) {
+  showLogin();
+} else {
+  enterApp();
+}
+</script>
+</body>
+</html>

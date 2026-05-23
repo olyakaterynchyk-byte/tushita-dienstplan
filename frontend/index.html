@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tushita Dienstplan</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%238FB8A9%22/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+  <script type="module" src="/src/main.js" defer></script>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<!-- LOGIN VIEW -->
+<div id="login-view" class="login-screen">
+  <div class="login-card">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div class="logo-circle"></div>
+      <div style="font-size:24px;font-weight:900;color:var(--text);letter-spacing:-0.5px;">Tushita</div>
+      <div style="font-size:12px;color:var(--text-soft);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Dienstplan</div>
+    </div>
+    <form id="login-form">
+      <input type="email" id="email" class="login-input" placeholder="E-Mail" required>
+      <input type="password" id="password" class="login-input" placeholder="Passwort" required>
+      <button type="submit" id="login-btn" class="login-btn">Anmelden</button>
+      <div id="login-error" style="color:var(--danger-dark);font-size:13px;text-align:center;margin-top:12px;"></div>
+    </form>
+  </div>
+</div>
+
+<!-- RESET PASSWORD VIEW -->
+<div id="reset-view" class="login-screen" style="display:none;">
+  <div class="login-card">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div class="logo-circle"></div>
+      <div style="font-size:20px;font-weight:800;color:var(--text);">Passwort setzen</div>
+    </div>
+    <form id="reset-form">
+      <input type="password" id="new-password" class="login-input" placeholder="Neues Passwort" required minlength="6">
+      <input type="password" id="new-password-confirm" class="login-input" placeholder="Passwort bestätigen" required minlength="6">
+      <button type="submit" id="reset-btn" class="login-btn">Speichern</button>
+      <div id="reset-error" style="color:var(--danger-dark);font-size:13px;text-align:center;margin-top:12px;"></div>
+    </form>
+  </div>
+</div>
+<div id="app" style="display:none;">
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-pin"></div>
+    <span>Tushita</span>
+  </div>
+
+  <div class="area-switch">
+    <button id="area-service" data-area="service" class="active" onclick="switchArea('service')">SERVICE</button>
+    <button id="area-kueche" data-area="kueche" onclick="switchArea('kueche')">KÜCHE</button>
+  </div>
+
+  <nav class="nav-tabs" id="nav-tabs">
+    <button class="nav-tab" data-view="dashboard" onclick="switchView('dashboard')" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-tab active" data-view="schedule" onclick="switchView('schedule')" title="Dienstplan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </button>
+    <button class="nav-tab" data-view="employees" onclick="switchView('employees')" title="Mitarbeiter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+    <button class="nav-tab" data-view="tausch" onclick="switchView('tausch')" title="Tauschbörse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      <span class="badge" id="tausch-badge" style="display:none;">0</span>
+    </button>
+    <button class="nav-tab" data-view="time" onclick="switchView('time')" title="Zeiterfassung">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+  </nav>
+
+  <div class="header-right">
+    <button class="icon-btn" id="templates-btn" onclick="openTemplatesModal()" title="Schicht-Typen verwalten">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="icon-btn" id="export-btn" onclick="exportData()" title="Export JSON">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+    <button class="icon-btn" id="import-btn" onclick="document.getElementById('import-file').click()" title="Import JSON">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    <div class="save-indicator" id="save-indicator" title="Alle Änderungen werden automatisch im Browser gespeichert">
+      <span class="dot"></span>
+      <span>Auto-Save</span>
+    </div>
+    <div class="user-pill" onclick="showUserMenu(event)" id="user-pill">
+      <div class="avatar" id="user-avatar"></div>
+      <div class="info">
+        <div class="name" id="user-name"></div>
+        <div class="role" id="user-role"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="side-tab active" title="Mitarbeiter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+    <div class="search-box">
+      <input type="text" id="emp-search" placeholder="Suchen..." oninput="renderSidebar()">
+    </div>
+    <div class="employee-list" id="employee-list"></div>
+    <button class="add-employee" id="add-employee-btn" onclick="openEmployeeModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Mitarbeiter hinzufügen
+    </button>
+  </aside>
+
+  <main class="main">
+
+    <!-- Schedule -->
+    <div class="view active" id="view-schedule">
+      <div class="toolbar">
+        <button class="nav-btn" onclick="navigateDate(-1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="date-label" id="date-label">Mai 2026</div>
+        <button class="nav-btn" onclick="navigateDate(1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="today-btn" onclick="goToToday()">Heute</button>
+
+        <div class="toolbar-spacer"></div>
+
+        <div class="view-toggle">
+          <button id="vt-month" class="active" onclick="setView('month')">Monat</button>
+          <button id="vt-week" onclick="setView('week')">Woche</button>
+        </div>
+
+        <button class="btn-secondary" id="copy-period-btn" onclick="openCopyPeriodModal()" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Vorlage
+        </button>
+
+        <button class="btn-publish" id="publish-btn" onclick="openPublishModal()" style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;background:var(--warning);color:#6B4F1F;position:relative;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          Veröffentlichen
+          <span class="badge" id="draft-badge" style="display:none;background:#B97676;color:white;border-radius:10px;padding:1px 7px;font-size:10.5px;font-weight:700;">0</span>
+        </button>
+
+        <button class="btn-primary" id="new-shift-btn" onclick="openShiftModal(null)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Schicht
+        </button>
+      </div>
+
+      <div id="info-banner-employee" class="info-banner" style="margin-top:16px;display:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>Du siehst den Dienstplan im Lese-Modus. Auf deine eigenen Schichten klicken, um sie zum Tausch zu stellen.</div>
+      </div>
+
+      <div class="schedule-container" id="schedule-container"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="view" id="view-dashboard">
+      <div class="dashboard">
+        <div class="week-cards" id="week-cards"></div>
+        <div class="stats-row" id="stats-row"></div>
+      </div>
+    </div>
+
+    <!-- Employees -->
+    <div class="view" id="view-employees">
+      <div class="employees-view">
+        <div class="employees-header">
+          <input class="employees-search" id="emp-search-2" placeholder="Name, Tätigkeit, E-Mail..." oninput="renderEmployeesGrid()">
+          <button class="btn-primary" id="add-employee-btn-2" onclick="openEmployeeModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Mitarbeiter anlegen
+          </button>
+        </div>
+        <div class="employees-grid" id="employees-grid"></div>
+      </div>
+    </div>
+
+    <!-- Tausch -->
+    <div class="view" id="view-tausch">
+      <div class="tausch-list">
+        <h2 style="font-size:22px;margin-bottom:6px;">Tauschbörse</h2>
+        <div style="color:var(--text-soft);margin-bottom:24px;">Schichten, die zum Tausch angeboten werden.</div>
+        <div id="tausch-content"></div>
+      </div>
+    </div>
+
+    <!-- Time -->
+    <div class="view" id="view-time">
+      <div class="dashboard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <h2 style="font-size:20px;">Zeiterfassung</h2>
+          <div class="view-toggle" style="display:flex;background:var(--surface-2);border-radius:8px;padding:3px;">
+            <button id="time-mode-list" class="active" onclick="setTimeMode('list')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text-soft);">Liste</button>
+            <button id="time-mode-person" onclick="setTimeMode('person')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text-soft);">Pro Mitarbeiter</button>
+          </div>
+        </div>
+        <div class="stat-card" style="margin-bottom:16px;">
+          <div>
+            <div class="stat-number" id="time-total">0h</div>
+            <div class="stat-label" id="time-label">Geplante Stunden insgesamt (aktuelle Periode)</div>
+          </div>
+        </div>
+        <div id="time-list"></div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="view" id="view-profile">
+      <div class="profile-view">
+        <a class="back-link" onclick="switchView('employees')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Zurück
+        </a>
+        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+          <div class="profile-card" id="profile-card-content"></div>
+          <div class="profile-details" id="profile-details-content"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Shift Modal -->
+<div class="modal-overlay" id="shift-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="shift-modal-title">Schicht erstellen</div>
+      <button class="modal-close" onclick="closeModal('shift-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="shift-modal-body"></div>
+    <div class="modal-footer" id="shift-modal-footer"></div>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-overlay" id="employee-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="employee-modal-title">Mitarbeiter anlegen</div>
+      <button class="modal-close" onclick="closeModal('employee-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vorname</label>
+          <input type="text" id="emp-firstname">
+        </div>
+        <div class="form-group">
+          <label>Nachname</label>
+          <input type="text" id="emp-lastname">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>E-Mail (Login)</label>
+        <input type="email" id="emp-email" placeholder="vorname@tushita.de">
+      </div>
+      <div class="form-group" id="emp-password-group">
+        <label>Passwort</label>
+        <input type="text" id="emp-password" placeholder="Wird automatisch gesetzt, falls leer">
+        <div style="font-size:12px;color:var(--text-mute);margin-top:4px;">Standard: tushita123 (kann später geändert werden)</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bereich</label>
+          <select id="emp-area">
+            <option value="service">Service</option>
+            <option value="kueche">Küche</option>
+            <option value="both">Beides</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Soll-Stunden / Monat</label>
+          <input type="number" id="emp-hours" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Telefon (optional)</label>
+        <input type="tel" id="emp-phone">
+      </div>
+      <div class="form-group">
+        <label>Notiz (optional)</label>
+        <textarea id="emp-note" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="emp-delete-btn" onclick="deleteEmployee()" style="display:none;margin-right:auto;">Löschen</button>
+      <button class="btn btn-secondary" onclick="closeModal('employee-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveEmployee()" style="background:var(--accent);color:white;">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schicht-Typen Editor Modal -->
+<div class="modal-overlay" id="templates-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">Schicht-Typen verwalten</div>
+      <button class="modal-close" onclick="closeModal('templates-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--info-soft);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--text);margin-bottom:14px;">
+        Bearbeite Name, Zeiten und Farbe deiner Schicht-Typen. Bestehende Schichten behalten ihre Werte — bei Farb-Änderung wird neu eingefärbt.
+      </div>
+
+      <div style="display:flex;gap:4px;background:var(--surface-2);border-radius:10px;padding:4px;margin-bottom:16px;">
+        <button id="tpl-area-service" class="tpl-area-btn active" onclick="switchTemplateArea('service')" style="flex:1;padding:8px;border-radius:7px;font-weight:700;font-size:12px;letter-spacing:0.3px;">SERVICE</button>
+        <button id="tpl-area-kueche" class="tpl-area-btn" onclick="switchTemplateArea('kueche')" style="flex:1;padding:8px;border-radius:7px;font-weight:700;font-size:12px;letter-spacing:0.3px;">KÜCHE</button>
+      </div>
+
+      <div id="templates-list"></div>
+
+      <button onclick="addNewTemplate()" style="width:100%;margin-top:10px;padding:10px;border:1.5px dashed var(--border);border-radius:10px;color:var(--accent-dark);font-weight:600;font-size:13px;cursor:pointer;background:transparent;transition:all 0.15s;">
+        + Neuen Schicht-Typ hinzufügen
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('templates-modal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Modal -->
+<div class="modal-overlay" id="publish-modal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <div class="modal-title">Dienstplan veröffentlichen</div>
+      <button class="modal-close" onclick="closeModal('publish-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="publish-modal-body"></div>
+    <div class="modal-footer" id="publish-modal-footer"></div>
+  </div>
+</div>
+
+<!-- Copy Period Modal -->
+<div class="modal-overlay" id="copy-period-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title">Vorlage kopieren</div>
+      <button class="modal-close" onclick="closeModal('copy-period-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--info-soft);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text);margin-bottom:18px;">
+        <b>Tipp:</b> Kopiere einen kompletten Monats- oder Wochenplan auf eine andere Periode. Die Schichten werden samt Mitarbeiter-Zuordnung übernommen — wahlweise auch ohne Zuordnung.
+      </div>
+      <div class="form-group">
+        <label>Was kopieren</label>
+        <select id="copy-mode">
+          <option value="month">Ganzer Monat</option>
+          <option value="week">Ganze Woche</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quelle</label>
+        <input type="month" id="copy-source-month">
+        <input type="date" id="copy-source-week" style="display:none;">
+      </div>
+      <div class="form-group">
+        <label>Ziel</label>
+        <input type="month" id="copy-target-month">
+        <input type="date" id="copy-target-week" style="display:none;">
+      </div>
+      <div class="form-group">
+        <label>Bereich</label>
+        <select id="copy-area">
+          <option value="current">Nur aktueller Bereich</option>
+          <option value="both">Beide Bereiche (Service + Küche)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);">
+          <input type="checkbox" id="copy-keep-employees" checked style="width:auto;">
+          Mitarbeiter-Zuordnung übernehmen
+        </label>
+        <div style="font-size:12px;color:var(--text-mute);margin-top:4px;">Wenn deaktiviert, werden alle kopierten Schichten als "Unbesetzt" angelegt.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('copy-period-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="doCopyPeriod()" style="background:var(--accent);color:white;">Kopieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal-overlay" id="password-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Passwort ändern</div>
+      <button class="modal-close" onclick="closeModal('password-modal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" id="old-password-group">
+        <label>Altes Passwort</label>
+        <input type="password" id="old-password">
+      </div>
+      <div class="form-group">
+        <label>Neues Passwort</label>
+        <input type="password" id="new-password">
+      </div>
+      <div class="form-group">
+        <label>Neues Passwort wiederholen</label>
+        <input type="password" id="new-password-2">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('password-modal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="changePassword()" style="background:var(--accent);color:white;">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="context-menu" id="context-menu"></div>
+<div class="toast" id="toast"></div>
+
+</div>
+
+</body>
+</html>
