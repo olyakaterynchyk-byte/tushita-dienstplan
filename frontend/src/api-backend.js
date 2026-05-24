@@ -2,7 +2,7 @@ import { getToken } from './auth.js';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
-async function apiCall(method, path, body = null) {
+async function apiCall(method, path, body = null, retries = 1) {
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${getToken()}`
@@ -11,14 +11,30 @@ async function apiCall(method, path, body = null) {
   const options = { method, headers };
   if (body) options.body = JSON.stringify(body);
 
-  const res = await fetch(`${BACKEND_URL}${path}`, options);
-  const data = await res.json();
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (attempt > 0) {
+        // Show a toast so the user knows we're retrying (cold start)
+        if (window.toast) window.toast('Server startet… bitte warten');
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      const res = await fetch(`${BACKEND_URL}${path}`, options);
+      const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.error || `Request failed: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(data.error || `Request failed: ${res.status}`);
+      }
+
+      return data;
+    } catch (err) {
+      lastError = err;
+      if (err.message === 'Failed to fetch' && attempt < retries) {
+        continue; // retry on network failure (cold start)
+      }
+    }
   }
-
-  return data;
+  throw lastError;
 }
 
 // ===== EMPLOYEES (admin operations) =====
