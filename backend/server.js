@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3001;
 // CORS — allow frontend origins (local dev + deployed)
 const allowedOrigins = [
   'http://localhost:5173',
+  'https://tushita-dienstplan.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
