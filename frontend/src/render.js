@@ -537,7 +537,7 @@ export function viewProfile(empId) {
       <button class="action-circle gray" onclick="window.openPasswordModal(${isMine?"'self'":`'${emp.id}'`})" title="Passwort">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </button>
-      ${isAdmin() && !isMine ? `<button class="action-circle red" onclick="if(confirm('Mitarbeiter wirklich löschen?')){window.deleteEmployeeProfile('${emp.id}')}" title="Löschen">
+      ${isAdmin() && !isMine ? `<button class="action-circle red" onclick="window.deleteEmployeeProfile('${emp.id}')" title="Löschen">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
       </button>` : ''}
     </div>` : ''}

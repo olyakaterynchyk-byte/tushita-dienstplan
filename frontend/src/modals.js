@@ -468,6 +468,7 @@ window.deleteShiftActionCtx = async (id) => {
 
 // Delete employee from profile page (by passed-in ID)
 window.deleteEmployeeProfile = async (id) => {
+  if (!confirm('Mitarbeiter wirklich löschen?')) return;
   try {
     await deleteEmployee(id);
     await loadAllData();
