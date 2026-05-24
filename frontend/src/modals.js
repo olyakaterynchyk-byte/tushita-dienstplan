@@ -323,7 +323,10 @@ window.openEmployeeModal = openEmployeeModal;
 window.saveEmployee = saveEmployee;
 
 export async function deleteEmployeeAction() {
-  if (!editingId || !confirm('Mitarbeiter wirklich löschen? Zugewiesene Schichten werden auf "Unbesetzt" gesetzt.')) return;
+  if (!editingId) return;
+  const confirmed = await window.appConfirm('Mitarbeiter wirklich löschen? Zugewiesene Schichten werden auf "Unbesetzt" gesetzt.');
+  if (!confirmed) return;
+  
   document.getElementById('employee-modal').classList.remove('show');
   try {
     await deleteEmployee(editingId);
@@ -466,9 +469,39 @@ window.deleteShiftActionCtx = async (id) => {
   } catch (err) { alert(err.message); }
 };
 
+// Custom Confirm Dialog
+window.appConfirm = (message) => {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirm-modal');
+    document.getElementById('confirm-modal-body').textContent = message;
+    
+    const btnOk = document.getElementById('confirm-modal-ok');
+    const btnCancel = document.getElementById('confirm-modal-cancel');
+    
+    // Clean up old listeners
+    const newBtnOk = btnOk.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+    
+    modal.classList.add('show');
+    
+    newBtnOk.addEventListener('click', () => {
+      modal.classList.remove('show');
+      resolve(true);
+    });
+    
+    newBtnCancel.addEventListener('click', () => {
+      modal.classList.remove('show');
+      resolve(false);
+    });
+  });
+};
+
 // Delete employee from profile page (by passed-in ID)
 window.deleteEmployeeProfile = async (id) => {
-  if (!confirm('Mitarbeiter wirklich löschen?')) return;
+  const confirmed = await window.appConfirm('Mitarbeiter wirklich löschen?');
+  if (!confirmed) return;
   try {
     await deleteEmployee(id);
     await loadAllData();
