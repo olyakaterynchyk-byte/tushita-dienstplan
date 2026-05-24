@@ -135,7 +135,10 @@ export async function saveShift() {
 }
 
 export async function deleteShiftAction() {
-  if (!editingId || !confirm('Schicht wirklich löschen?')) return;
+  if (!editingId) return;
+  const confirmed = await window.appConfirm('Schicht wirklich löschen?');
+  if (!confirmed) return;
+  
   document.getElementById('shift-modal').classList.remove('show');
   try {
     await deleteShift(editingId);
@@ -189,7 +192,8 @@ export async function doPublish(type) {
     await loadAllData();
     renderAll();
     
-    if (confirm(`${shiftIds.length} Schichten veröffentlicht!\nMöchtest du eine E-Mail an das Team senden?`)) {
+    const confirmed = await window.appConfirm(`${shiftIds.length} Schichten veröffentlicht!\nMöchtest du eine E-Mail an das Team senden?`);
+    if (confirmed) {
       sendMailtoNotification(toPublish, type, cursor);
     }
   } catch (err) {
@@ -461,7 +465,8 @@ window.hideContextMenu = () => { document.getElementById('context-menu').classLi
 // Delete shift directly from context menu (by passed-in ID)
 window.deleteShiftActionCtx = async (id) => {
   window.hideContextMenu();
-  if (!confirm('Schicht wirklich löschen?')) return;
+  const confirmed = await window.appConfirm('Schicht wirklich löschen?');
+  if (!confirmed) return;
   try {
     await deleteShift(id);
     await loadAllData();
@@ -612,11 +617,13 @@ export async function deleteTemplateAction(id) {
   try {
     const shiftsUsingTemplate = getShifts().filter(s => s.template_id === id);
     if (shiftsUsingTemplate.length > 0) {
-      if (!confirm(`Achtung! Dieser Schicht-Typ wird noch in ${shiftsUsingTemplate.length} Schichten verwendet. Wirklich löschen?`)) {
+      const confirmed = await window.appConfirm(`Achtung! Dieser Schicht-Typ wird noch in ${shiftsUsingTemplate.length} Schichten verwendet. Wirklich löschen?`);
+      if (!confirmed) {
         return;
       }
     } else {
-      if (!confirm('Schicht-Typ löschen?')) return;
+      const confirmed = await window.appConfirm('Schicht-Typ löschen?');
+      if (!confirmed) return;
     }
     
     await deleteTemplate(id);
