@@ -278,7 +278,7 @@ export function renderDashboard() {
         const isSwap = isShiftOnSwap(s);
         
         return `
-          <div style="background:var(--surface-2); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:16px;">
+          <div class="dashboard-shift-item">
             <div style="background:var(--accent-dark); color:white; width:44px; height:44px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
               <div style="font-weight:700; font-size:12px; line-height:1;">${DAYS_SHORT[d.getDay()]}</div>
               <div style="font-size:10px; font-weight:600; line-height:1.2; opacity:0.9;">${('0'+d.getDate()).slice(-2)}.${('0'+(d.getMonth()+1)).slice(-2)}</div>
@@ -289,8 +289,8 @@ export function renderDashboard() {
               <div style="font-size:12px; color:var(--text-mute); margin-top:2px;">${s.area === 'kueche' ? 'Küche' : 'Service'} | Tushita</div>
             </div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; justify-content:center;">
-              <button class="btn" style="width:52px; height:52px; border-radius:50%; border:1px solid #FECDD3; background:#FFF1F2; color:#E11D48; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05);" onclick="event.stopPropagation(); window.showMyShiftOptions(event, '${s.id}')" title="Schicht tauschen">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              <button class="btn dashboard-shift-btn" onclick="event.stopPropagation(); window.showMyShiftOptions(event, '${s.id}')" title="Schicht tauschen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
               </button>
             </div>
           </div>
