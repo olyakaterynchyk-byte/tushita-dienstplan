@@ -133,3 +133,5 @@ export function toast(msg) {
   clearTimeout(t._t);
   t._t = setTimeout(() => t.classList.remove('show'), 2400);
 }
+
+window.toast = toast;
