@@ -243,18 +243,49 @@ export function renderDashboard() {
     </div>
   `).join('');
 
-  const area = getArea();
-  const empsForArea = getEmployeesForArea(area);
-  const shiftsForArea = getShifts().filter(s => s.area === area);
-  const unassigned = shiftsForArea.filter(s => !s.employee_id).length;
-  const openSwaps = getSwapRequests().filter(r => r.status === 'open').length;
+  const myId = getUserId();
+  const today = todayStr();
+  const myUpcomingShifts = getShifts()
+    .filter(s => s.employee_id === myId && s.date >= today)
+    .sort((a,b) => a.date.localeCompare(b.date) || (a.start_time || '').localeCompare(b.start_time || ''))
+    .slice(0, 10); // next 10 shifts
 
-  document.getElementById('stats-row').innerHTML = `
-    <div class="stat-card"><div class="stat-number">${empsForArea.length}</div><div class="stat-label">Mitarbeiter</div></div>
-    <div class="stat-card"><div class="stat-number">${shiftsForArea.length}</div><div class="stat-label">Schichten gesamt</div></div>
-    <div class="stat-card"><div class="stat-number">${unassigned}</div><div class="stat-label">Unbesetzt</div></div>
-    <div class="stat-card"><div class="stat-number">${openSwaps}</div><div class="stat-label">Offene Tauschanfragen</div></div>
-  `;
+  const myShiftsContainer = document.getElementById('dashboard-my-shifts');
+  if (myShiftsContainer) {
+    if (myUpcomingShifts.length === 0) {
+      myShiftsContainer.innerHTML = `<div style="color:var(--text-soft); font-size:13px; background:var(--surface-2); padding:16px; border-radius:12px; text-align:center;">Keine anstehenden Schichten.</div>`;
+    } else {
+      myShiftsContainer.innerHTML = myUpcomingShifts.map(s => {
+        const d = parseDate(s.date);
+        const tpl = findTemplate(s.template_id);
+        const label = s.custom_label || s.label || (tpl ? tpl.label : 'Schicht');
+        const isSwap = isShiftOnSwap(s);
+        
+        return `
+          <div style="background:var(--surface-2); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:16px;">
+            <div style="background:#22C55E; color:white; width:44px; height:44px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+              <div style="font-weight:700; font-size:12px; line-height:1;">${DAYS_SHORT[d.getDay()]}</div>
+              <div style="font-size:10px; font-weight:600; line-height:1.2; opacity:0.9;">${('0'+d.getDate()).slice(-2)}.${('0'+(d.getMonth()+1)).slice(-2)}</div>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:600; font-size:13px; color:var(--text); margin-bottom:2px;">${s.start_time.slice(0,5)} – ${s.end_time.slice(0,5)}</div>
+              <div style="font-size:13px; font-weight:600;">${escapeHtml(label)}</div>
+              <div style="font-size:12px; color:var(--text-mute); margin-top:2px;">${s.area === 'kueche' ? 'Küche' : 'Service'} | Tushita</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+              <div style="font-size:12px; font-weight:600; color:var(--text-mute); display:flex; align-items:center; gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                ${Math.floor(Math.random() * 30)}
+              </div>
+              <button class="btn" style="width:32px; height:32px; border-radius:50%; border:1px solid ${isSwap ? 'var(--danger)' : 'var(--danger-soft)'}; background:${isSwap ? 'var(--danger-soft)' : 'none'}; color:var(--danger); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="window.showShiftContextMenu(event, '${s.id}')" title="Schicht tauschen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
 }
 
 function getShiftsInWeek(dateStr) {
