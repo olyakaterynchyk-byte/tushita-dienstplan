@@ -190,11 +190,22 @@ export function renderShiftCard(s) {
   if (swap) tags += '<span class="shift-tag tausch">TAUSCH</span>';
   if (isDraft && isAdmin()) tags += `<span class="shift-tag draft">${statusTag}</span>`;
 
+  // Person icon for own shifts
+  const personIcon = mine ? `<div class="shift-mine-icon" title="Deine Schicht">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+  </div>` : '';
+
+  // Click handler: admin → edit modal, employee own shift → swap menu, other → nothing
+  const clickHandler = isAdmin()
+    ? `window.openShiftModal('${s.id}')`
+    : (mine ? `window.showMyShiftOptions(event,'${s.id}')` : '');
+
   return `<div class="shift ${s.employee_id ? '' : 'unassigned'} ${mine?'mine':''} ${isDraft&&isAdmin()?'draft':''}"
        style="background:${bgColor};"
        title="${escapeHtml(label)} · ${s.start_time.slice(0,5)}–${s.end_time.slice(0,5)} · ${emp ? escapeHtml(fullName(emp)) : 'Unbesetzt'}${isDraft?' · '+statusTag:''}"
-       onclick="event.stopPropagation();window.openShiftModal('${s.id}')"
+       onclick="event.stopPropagation();${clickHandler}"
        oncontextmenu="event.preventDefault();window.showShiftContextMenu(event,'${s.id}')">
+    ${personIcon}
     <div class="shift-title">
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(label)}${tags}</span>
       <span class="shift-slot">${s.employee_id ? '1/1' : '0/1'}</span>

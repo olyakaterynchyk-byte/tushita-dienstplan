@@ -477,6 +477,27 @@
   .shift-tag.mine { background: var(--accent-dark); color: white; }
   .shift-tag.tausch { background: var(--warning); color: #6B4F1F; }
 
+  .shift-mine-icon {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .shift-mine-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
   .add-shift {
     margin-top: auto; padding: 7px;
     border: 1.5px dashed var(--border); border-radius: 8px;

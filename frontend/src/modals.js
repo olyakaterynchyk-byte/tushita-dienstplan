@@ -1,7 +1,7 @@
 import { getArea, getCursorDate, setCursorDate } from './state.js';
 import { isAdmin, getUserId } from './auth.js';
 import { 
-  getEmployeesForArea, getTemplatesForArea, getShifts, findTemplate, findShift, findEmployee,
+  getEmployeesForArea, getTemplatesForArea, getShifts, getSwapRequests, findTemplate, findShift, findEmployee,
   createSwapRequest, loadAllData, updateOwnProfile
 } from './api.js';
 import {
@@ -587,15 +587,53 @@ window.deleteEmployeeProfile = async (id) => {
   } catch (err) { alert(err.message || 'Fehler beim Löschen'); }
 };
 
+// Show options when an employee clicks their own shift
+window.showMyShiftOptions = (e, shiftId) => {
+  const shift = findShift(shiftId);
+  if (!shift) return;
+  
+  const menu = document.getElementById('context-menu');
+  const swaps = getSwapRequests();
+  const alreadyOnSwap = swaps.some(r => r.shift_id === shiftId && r.status === 'open');
+  
+  let html = '';
+  if (alreadyOnSwap) {
+    html += `<div class="context-item" style="color:var(--text-mute);pointer-events:none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Bereits in der Schichtenbörse
+    </div>`;
+    const swapReq = swaps.find(r => r.shift_id === shiftId && r.status === 'open');
+    if (swapReq) {
+      html += `<div class="context-item" style="color:var(--danger-dark);" onclick="window.cancelSwap('${swapReq.id}')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Zurückziehen
+      </div>`;
+    }
+  } else {
+    html += `<div class="context-item" onclick="window.requestSwap('${shiftId}')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      In die Schichtenbörse stellen
+    </div>`;
+  }
+  
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+  let x = e.pageX || e.clientX, y = e.pageY || e.clientY;
+  if (x + 220 > window.innerWidth) x = window.innerWidth - 220;
+  if (y + menu.offsetHeight > window.innerHeight) y = window.innerHeight - menu.offsetHeight;
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  menu.classList.add('show');
+};
+
 // Tausch actions
 window.requestSwap = async (shiftId) => {
   window.hideContextMenu();
-  const note = prompt('Optional: Warum möchtest du tauschen?', '');
-  if (note === null) return;
   try {
-    await createSwapRequest(shiftId, getUserId(), note);
+    await createSwapRequest(shiftId, getUserId(), '');
+    await loadAllData();
     renderAll();
-    window.toast('Tauschanfrage erstellt');
+    window.toast('Schicht in die Schichtenbörse gestellt!');
   } catch (err) { alert(err.message); }
 };
 
