@@ -73,6 +73,10 @@ export async function publishShifts(shiftIds) {
   return apiCall('POST', '/api/shifts/publish', { shiftIds });
 }
 
+export async function takeSwap(shiftId, swapId) {
+  return apiCall('POST', `/api/shifts/${shiftId}/take-swap`, { swapId });
+}
+
 export async function copyPeriod({ sourceShiftIds, dateMapping, keepEmployees, area }) {
   return apiCall('POST', '/api/shifts/copy-period', { sourceShiftIds, dateMapping, keepEmployees, area });
 }

@@ -179,4 +179,57 @@ router.delete('/:id', adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/shifts/:id/take-swap — Regular employee takes an open swap
+router.post('/:id/take-swap', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { swapId } = req.body;
+    const userId = req.user.id; // from authMiddleware
+
+    if (!swapId) return res.status(400).json({ error: 'Missing swapId' });
+
+    // Verify swap request exists and is open
+    const { data: swap, error: swapFetchError } = await supabaseAdmin
+      .from('swap_requests')
+      .select('*')
+      .eq('id', swapId)
+      .single();
+
+    if (swapFetchError || !swap) {
+      return res.status(404).json({ error: 'Tauschanfrage nicht gefunden' });
+    }
+    if (swap.shift_id !== id) {
+      return res.status(400).json({ error: 'Schicht stimmt nicht überein' });
+    }
+    if (swap.status !== 'open') {
+      return res.status(400).json({ error: 'Schicht wurde bereits übernommen oder zurückgezogen' });
+    }
+
+    // 1. Update the shift employee to the new user
+    const { error: shiftError } = await supabaseAdmin
+      .from('shifts')
+      .update({ employee_id: userId })
+      .eq('id', id);
+
+    if (shiftError) throw shiftError;
+
+    // 2. Update the swap request status
+    const { error: updateSwapError } = await supabaseAdmin
+      .from('swap_requests')
+      .update({
+        status: 'taken',
+        taken_by: userId,
+        taken_at: new Date().toISOString()
+      })
+      .eq('id', swapId);
+
+    if (updateSwapError) throw updateSwapError;
+
+    res.json({ message: 'Schicht erfolgreich übernommen' });
+  } catch (err) {
+    console.error('Take swap error:', err);
+    res.status(500).json({ error: 'Fehler bei der Übernahme' });
+  }
+});
+
 module.exports = router;

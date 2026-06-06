@@ -1,5 +1,6 @@
 import { supabase } from './supabase.js';
 import { getArea } from './state.js';
+import { takeSwap } from './api-backend.js';
 
 // ===== In-memory data cache =====
 let employees = [];
@@ -121,29 +122,8 @@ export async function takeSwapRequest(swapId, takenByUserId) {
   const swap = swapRequests.find(r => r.id === swapId);
   if (!swap) throw new Error('Tauschanfrage nicht gefunden');
 
-  // Update the shift's employee
-  const { error: shiftError } = await supabase
-    .from('shifts')
-    .update({ employee_id: takenByUserId })
-    .eq('id', swap.shift_id);
-
-  // Note: employees can't update shifts directly via RLS,
-  // but taking a swap is a special case. We'll handle this via
-  // a more permissive policy or use the backend.
-  // For now, we try directly — if RLS blocks it, we'll adjust.
-
-  // Update the swap request
-  const { error: swapError } = await supabase
-    .from('swap_requests')
-    .update({
-      status: 'taken',
-      taken_by: takenByUserId,
-      taken_at: new Date().toISOString()
-    })
-    .eq('id', swapId);
-
-  if (shiftError) throw shiftError;
-  if (swapError) throw swapError;
+  // Use the backend to atomically bypass RLS and update both the shift and swap request
+  await takeSwap(swap.shift_id, swapId);
 
   await Promise.all([loadShifts(), loadSwapRequests()]);
 }
