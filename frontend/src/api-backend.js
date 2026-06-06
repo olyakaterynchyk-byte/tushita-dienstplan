@@ -39,8 +39,8 @@ async function apiCall(method, path, body = null, retries = 1) {
 
 // ===== EMPLOYEES (admin operations) =====
 
-export async function createEmployee({ firstname, lastname, email, area, hours, phone, note }) {
-  return apiCall('POST', '/api/employees', { firstname, lastname, email, area, hours, phone, note });
+export async function createEmployee({ firstname, lastname, email, area, hours, phone, note, password }) {
+  return apiCall('POST', '/api/employees', { firstname, lastname, email, area, hours, phone, note, password });
 }
 
 export async function updateEmployee(id, updates) {

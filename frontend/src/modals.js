@@ -1,4 +1,4 @@
-import { getArea, getCursorDate } from './state.js';
+import { getArea, getCursorDate, setCursorDate } from './state.js';
 import { isAdmin, getUserId } from './auth.js';
 import { 
   getEmployeesForArea, getTemplatesForArea, getShifts, findTemplate, findShift, findEmployee,
@@ -288,6 +288,7 @@ export async function saveEmployee() {
   const fPhone = document.getElementById('emp-phone').value.trim();
   const fHours = parseFloat(document.getElementById('emp-hours').value) || 0;
   const fNote = document.getElementById('emp-note') ? document.getElementById('emp-note').value.trim() : '';
+  const fPassword = document.getElementById('emp-password') ? document.getElementById('emp-password').value.trim() : '';
   
   if (!fFirst) { alert('Vorname fehlt'); return; }
   
@@ -305,6 +306,7 @@ export async function saveEmployee() {
       });
     } else {
       if (!fEmail) { alert('E-Mail erforderlich zum Einladen'); return; }
+      const usedPassword = fPassword || 'tushita123';
       await createEmployee({ 
         firstname: fFirst, 
         lastname: fLast, 
@@ -312,9 +314,10 @@ export async function saveEmployee() {
         area: fArea, 
         phone: fPhone, 
         hours: fHours, 
-        note: fNote 
+        note: fNote,
+        password: usedPassword
       });
-      alert(`Einladung an ${fEmail} versendet!`);
+      alert(`Mitarbeiter ${fFirst} ${fLast} angelegt!\n\nLogin-Daten:\nE-Mail: ${fEmail}\nPasswort: ${usedPassword}`);
     }
     await loadAllData();
     renderAll();
@@ -350,80 +353,148 @@ window.deleteEmployee = deleteEmployeeAction;
 // ===== COPY PERIOD MODAL =====
 export function openCopyPeriodModal() {
   if (!isAdmin()) return;
-  document.getElementById('copy-period-modal').classList.add('show');
+  const modal = document.getElementById('copy-period-modal');
   const cd = parseDate(getCursorDate());
-  document.getElementById('copy-source').textContent = getView() === 'month' 
-    ? `${MONTHS[cd.getMonth()]} ${cd.getFullYear()}` 
-    : `KW ${getWeekNumber(getCursorDate())}`;
+  
+  // Pre-fill source fields with current period
+  const sourceMonth = document.getElementById('copy-source-month');
+  const targetMonth = document.getElementById('copy-target-month');
+  const sourceWeek = document.getElementById('copy-source-week');
+  const targetWeek = document.getElementById('copy-target-week');
+  const modeSelect = document.getElementById('copy-mode');
+  
+  // Set source month to current month
+  const curMonth = `${cd.getFullYear()}-${String(cd.getMonth() + 1).padStart(2, '0')}`;
+  const nextMo = new Date(cd.getFullYear(), cd.getMonth() + 1, 1);
+  const nextMonth = `${nextMo.getFullYear()}-${String(nextMo.getMonth() + 1).padStart(2, '0')}`;
+  
+  if (sourceMonth) sourceMonth.value = curMonth;
+  if (targetMonth) targetMonth.value = nextMonth;
+  if (sourceWeek) sourceWeek.value = getCursorDate();
+  if (targetWeek) {
+    const nw = new Date(cd);
+    nw.setDate(nw.getDate() + 7);
+    targetWeek.value = formatDate(nw);
+  }
+  
+  // Toggle visibility based on mode
+  if (modeSelect) {
+    modeSelect.onchange = () => {
+      const isMonth = modeSelect.value === 'month';
+      if (sourceMonth) sourceMonth.style.display = isMonth ? '' : 'none';
+      if (targetMonth) targetMonth.style.display = isMonth ? '' : 'none';
+      if (sourceWeek) sourceWeek.style.display = isMonth ? 'none' : '';
+      if (targetWeek) targetWeek.style.display = isMonth ? 'none' : '';
+    };
+    modeSelect.onchange(); // trigger initial state
+  }
+  
+  modal.classList.add('show');
 }
 
 export async function doCopyPeriod() {
-  const keepEmps = document.getElementById('copy-keep-emps').checked;
-  const view = getView();
-  const area = getArea();
-  const cd = parseDate(getCursorDate());
+  const modeSelect = document.getElementById('copy-mode');
+  const mode = modeSelect ? modeSelect.value : 'month';
+  const keepEmps = document.getElementById('copy-keep-employees')?.checked ?? true;
+  const copyAreaSelect = document.getElementById('copy-area');
+  const copyAreaMode = copyAreaSelect ? copyAreaSelect.value : 'current';
+  const currentArea = getArea();
   
   document.getElementById('copy-period-modal').classList.remove('show');
   
-  // Logic to calculate mapping
-  let mapping = {};
-  let sourceShifts = [];
+  // Determine which areas to copy
+  const areas = copyAreaMode === 'both' ? ['service', 'kueche'] : [currentArea];
   
-  if (view === 'month') {
-    // Next month
-    const nextMonth = new Date(cd.getFullYear(), cd.getMonth() + 1, 1);
-    const sourceDays = getMonthGrid(getCursorDate()).filter(d => d.inMonth);
-    const targetDays = getMonthGrid(formatDate(nextMonth)).filter(d => d.inMonth);
+  let totalCopied = 0;
+  
+  for (const area of areas) {
+    let mapping = {};
+    let sourceShifts = [];
     
-    sourceShifts = getShifts().filter(s => s.area === area && parseDate(s.date).getMonth() === cd.getMonth() && parseDate(s.date).getFullYear() === cd.getFullYear());
-    
-    // Map by day of month (e.g. 1st to 1st)
-    for (let i = 0; i < Math.min(sourceDays.length, targetDays.length); i++) {
-      mapping[sourceDays[i].date] = targetDays[i].date;
+    if (mode === 'month') {
+      const sourceVal = document.getElementById('copy-source-month')?.value; // "2026-06"
+      const targetVal = document.getElementById('copy-target-month')?.value;
+      
+      if (!sourceVal || !targetVal) {
+        alert('Bitte Quell- und Zielmonat angeben.');
+        return;
+      }
+      
+      const [sYear, sMonth] = sourceVal.split('-').map(Number);
+      const [tYear, tMonth] = targetVal.split('-').map(Number);
+      
+      const sourceDate = formatDate(new Date(sYear, sMonth - 1, 1));
+      const targetDate = formatDate(new Date(tYear, tMonth - 1, 1));
+      
+      const sourceDays = getMonthGrid(sourceDate).filter(d => d.inMonth);
+      const targetDays = getMonthGrid(targetDate).filter(d => d.inMonth);
+      
+      sourceShifts = getShifts().filter(s => 
+        s.area === area && 
+        parseDate(s.date).getMonth() === (sMonth - 1) && 
+        parseDate(s.date).getFullYear() === sYear
+      );
+      
+      // Map by day-of-month index
+      for (let i = 0; i < Math.min(sourceDays.length, targetDays.length); i++) {
+        mapping[sourceDays[i].date] = targetDays[i].date;
+      }
+    } else {
+      const sourceVal = document.getElementById('copy-source-week')?.value;
+      const targetVal = document.getElementById('copy-target-week')?.value;
+      
+      if (!sourceVal || !targetVal) {
+        alert('Bitte Quell- und Zielwoche angeben.');
+        return;
+      }
+      
+      const sourceWeek = getWeekGrid(sourceVal);
+      const targetWeek = getWeekGrid(targetVal);
+      
+      const weekDays = sourceWeek.map(d => d.date);
+      sourceShifts = getShifts().filter(s => s.area === area && weekDays.includes(s.date));
+      
+      for (let i = 0; i < 7; i++) {
+        mapping[sourceWeek[i].date] = targetWeek[i].date;
+      }
     }
-  } else {
-    // Next week
-    const sourceWeek = getWeekGrid(getCursorDate());
-    const nextWeekDate = new Date(cd);
-    nextWeekDate.setDate(cd.getDate() + 7);
-    const targetWeek = getWeekGrid(formatDate(nextWeekDate));
     
-    const weekDays = sourceWeek.map(d => d.date);
-    sourceShifts = getShifts().filter(s => s.area === area && weekDays.includes(s.date));
+    if (sourceShifts.length === 0) continue;
     
-    for (let i = 0; i < 7; i++) {
-      mapping[sourceWeek[i].date] = targetWeek[i].date;
+    try {
+      const result = await copyPeriod({
+        sourceShiftIds: sourceShifts.map(s => s.id),
+        dateMapping: mapping,
+        keepEmployees: keepEmps,
+        area
+      });
+      totalCopied += result.count || sourceShifts.length;
+    } catch (err) {
+      alert(err.message);
+      return;
     }
   }
   
-  if (sourceShifts.length === 0) {
-    alert('Keine Schichten im Ursprungszeitraum.');
+  if (totalCopied === 0) {
+    alert('Keine Schichten im Ursprungszeitraum gefunden.');
     return;
   }
   
-  try {
-    await copyPeriod({
-      sourceShiftIds: sourceShifts.map(s => s.id),
-      dateMapping: mapping,
-      keepEmployees: keepEmps,
-      area
-    });
-    
-    // Move cursor to target
-    if (view === 'month') {
-      const nextMonth = new Date(cd.getFullYear(), cd.getMonth() + 1, 1);
-      window.setCursorDate(formatDate(nextMonth));
-    } else {
-      const nextWeek = new Date(cd);
-      nextWeek.setDate(cd.getDate() + 7);
-      window.setCursorDate(formatDate(nextWeek));
+  // Move cursor to target period
+  if (mode === 'month') {
+    const targetVal = document.getElementById('copy-target-month')?.value;
+    if (targetVal) {
+      const [tYear, tMonth] = targetVal.split('-').map(Number);
+      setCursorDate(formatDate(new Date(tYear, tMonth - 1, 1)));
     }
-    
-    await loadAllData();
-    renderAll();
-  } catch (err) {
-    alert(err.message);
+  } else {
+    const targetVal = document.getElementById('copy-target-week')?.value;
+    if (targetVal) setCursorDate(targetVal);
   }
+  
+  await loadAllData();
+  renderAll();
+  window.toast(`${totalCopied} Schichten kopiert!`);
 }
 
 window.openCopyPeriodModal = openCopyPeriodModal;

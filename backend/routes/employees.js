@@ -6,7 +6,8 @@ const { adminOnly } = require('../middleware/auth');
 // POST /api/employees — Admin creates a new employee (sends invite)
 router.post('/', adminOnly, async (req, res) => {
   try {
-    const { firstname, lastname, email, area, hours, phone, note } = req.body;
+    const { firstname, lastname, email, area, hours, phone, note, password } = req.body;
+    const userPassword = password || 'tushita123';
 
     if (!email) {
       return res.status(400).json({ error: 'E-Mail ist erforderlich' });
@@ -18,6 +19,7 @@ router.post('/', adminOnly, async (req, res) => {
     // Create user via Supabase Auth (invite by email)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
+      password: userPassword,
       email_confirm: true,
       user_metadata: {
         firstname: firstname || '',
