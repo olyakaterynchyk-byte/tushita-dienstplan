@@ -143,13 +143,9 @@ CREATE POLICY "Service role full access to templates"
   ON public.shift_templates FOR ALL TO service_role USING (true);
 
 -- SHIFTS
-CREATE POLICY "Read shifts: published or own or admin"
+CREATE POLICY "Anyone authenticated can read shifts"
   ON public.shifts FOR SELECT TO authenticated
-  USING (
-    status = 'published'
-    OR employee_id = auth.uid()
-    OR get_my_role() = 'admin'
-  );
+  USING (true);
 
 CREATE POLICY "Admins can insert shifts"
   ON public.shifts FOR INSERT TO authenticated

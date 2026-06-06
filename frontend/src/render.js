@@ -154,14 +154,9 @@ function renderWeekView(container, week) {
 }
 
 function getShiftsForDay(date) {
-  const myId = getUserId();
   const area = getArea();
   return getShifts()
-    .filter(s => {
-      if (s.date !== date || s.area !== area) return false;
-      if (isAdmin()) return true;
-      return s.status === 'published' || s.employee_id === myId;
-    })
+    .filter(s => s.date === date && s.area === area)
     .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
 }
 
