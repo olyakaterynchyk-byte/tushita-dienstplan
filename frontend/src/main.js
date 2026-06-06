@@ -192,8 +192,8 @@ window.openPasswordModal = async (id) => {
     window._passwordTargetId = 'self';
     document.getElementById('old-password-group').style.display = 'block';
     document.getElementById('old-password').value = '';
-    document.getElementById('new-password').value = '';
-    document.getElementById('new-password-2').value = '';
+    document.getElementById('modal-new-password').value = '';
+    document.getElementById('modal-new-password-2').value = '';
     document.querySelector('#password-modal .modal-title').textContent = 'Passwort ändern';
     document.getElementById('password-modal').classList.add('show');
   } else {
@@ -265,8 +265,8 @@ window.logout = async () => {
 };
 window.exportData = () => alert('Export nicht mehr verfügbar (Daten sind jetzt in der Cloud)');
 window.changePassword = async () => {
-  const p1 = document.getElementById('new-password').value;
-  const p2 = document.getElementById('new-password-2').value;
+  const p1 = document.getElementById('modal-new-password').value;
+  const p2 = document.getElementById('modal-new-password-2').value;
   if(p1.length < 6) return alert('Passwort muss mindestens 6 Zeichen haben.');
   if(p1 !== p2) return alert('Passwörter stimmen nicht überein.');
   
