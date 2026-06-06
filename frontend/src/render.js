@@ -243,6 +243,22 @@ export function renderDashboard() {
     </div>
   `).join('');
 
+  const area = getArea();
+  const empsForArea = getEmployeesForArea(area);
+  const shiftsForArea = getShifts().filter(s => s.area === area);
+  const unassigned = shiftsForArea.filter(s => !s.employee_id).length;
+  const openSwaps = getSwapRequests().filter(r => r.status === 'open').length;
+
+  const statsRow = document.getElementById('stats-row');
+  if (statsRow) {
+    statsRow.innerHTML = `
+      <div class="stat-card"><div class="stat-number">${empsForArea.length}</div><div class="stat-label">Mitarbeiter</div></div>
+      <div class="stat-card"><div class="stat-number">${shiftsForArea.length}</div><div class="stat-label">Schichten gesamt</div></div>
+      <div class="stat-card"><div class="stat-number">${unassigned}</div><div class="stat-label">Unbesetzt</div></div>
+      <div class="stat-card"><div class="stat-number">${openSwaps}</div><div class="stat-label">Offene Tauschanfragen</div></div>
+    `;
+  }
+
   const myId = getUserId();
   const today = todayStr();
   const myUpcomingShifts = getShifts()
