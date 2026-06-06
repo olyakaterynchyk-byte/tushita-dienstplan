@@ -279,7 +279,7 @@ export function renderDashboard() {
         
         return `
           <div style="background:var(--surface-2); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:16px;">
-            <div style="background:#22C55E; color:white; width:44px; height:44px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+            <div style="background:var(--accent-dark); color:white; width:44px; height:44px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
               <div style="font-weight:700; font-size:12px; line-height:1;">${DAYS_SHORT[d.getDay()]}</div>
               <div style="font-size:10px; font-weight:600; line-height:1.2; opacity:0.9;">${('0'+d.getDate()).slice(-2)}.${('0'+(d.getMonth()+1)).slice(-2)}</div>
             </div>
@@ -288,13 +288,9 @@ export function renderDashboard() {
               <div style="font-size:13px; font-weight:600;">${escapeHtml(label)}</div>
               <div style="font-size:12px; color:var(--text-mute); margin-top:2px;">${s.area === 'kueche' ? 'Küche' : 'Service'} | Tushita</div>
             </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-              <div style="font-size:12px; font-weight:600; color:var(--text-mute); display:flex; align-items:center; gap:4px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                ${Math.floor(Math.random() * 30)}
-              </div>
-              <button class="btn" style="width:32px; height:32px; border-radius:50%; border:1px solid ${isSwap ? 'var(--danger)' : 'var(--danger-soft)'}; background:${isSwap ? 'var(--danger-soft)' : 'none'}; color:var(--danger); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="window.showShiftContextMenu(event, '${s.id}')" title="Schicht tauschen">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; justify-content:center;">
+              <button class="btn" style="width:36px; height:36px; border-radius:50%; border:1px solid ${isSwap ? 'var(--danger)' : 'var(--border)'}; background:${isSwap ? 'rgba(212, 154, 154, 0.1)' : 'var(--surface)'}; color:${isSwap ? 'var(--danger-dark)' : 'var(--text-soft)'}; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05);" onclick="window.showShiftContextMenu(event, '${s.id}')" title="Schicht tauschen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
               </button>
             </div>
           </div>
