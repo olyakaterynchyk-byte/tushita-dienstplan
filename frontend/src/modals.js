@@ -531,7 +531,13 @@ export function showShiftContextMenu(e, id) {
 }
 
 window.showShiftContextMenu = showShiftContextMenu;
-window.hideContextMenu = () => { document.getElementById('context-menu').classList.remove('show'); };
+window.hideContextMenu = () => { 
+  const menu = document.getElementById('context-menu');
+  if (menu) {
+    menu.classList.remove('show');
+    menu.style.display = '';
+  }
+};
 
 // Delete shift directly from context menu (by passed-in ID)
 window.deleteShiftActionCtx = async (id) => {

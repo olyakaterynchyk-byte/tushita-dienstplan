@@ -235,7 +235,10 @@ window.showUserMenu = (e) => {
 
 window.hideContextMenu = () => {
   const menu = document.getElementById('context-menu');
-  if (menu) menu.classList.remove('show');
+  if (menu) {
+    menu.classList.remove('show');
+    menu.style.display = '';
+  }
 };
 
 window.logout = async () => {
