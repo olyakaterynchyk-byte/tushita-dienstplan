@@ -352,7 +352,7 @@
 
   /* ===== Schedule ===== */
   .schedule-container { padding: 16px 20px 32px; overflow-x: auto; }
-  .schedule-grid { display: grid; gap: 10px; min-width: 100%; }
+  .schedule-grid { display: grid; gap: 10px; min-width: 800px; }
   .schedule-month .schedule-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .schedule-week .schedule-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   @media (min-width: 1400px) {
@@ -923,11 +923,22 @@
       gap: 12px;
     }
     .dashboard-shift-btn {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
     }
     .dashboard-shift-btn svg {
-      width: 22px;
-      height: 22px;
+      width: 26px;
+      height: 26px;
+    }
+    .login-card {
+      padding: 24px;
+      border-radius: 16px;
+      width: 100%;
+    }
+    .login-screen {
+      padding: 16px;
+    }
+    .schedule-container {
+      padding: 12px 12px 24px;
     }
   }
