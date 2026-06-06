@@ -1,4 +1,4 @@
-import { getArea, getView, getCursorDate } from './state.js';
+import { getArea, getView, getCursorDate, getScheduleFilter, setScheduleFilter } from './state.js';
 import { isAdmin, getUserId, getUserEmail } from './auth.js';
 import { 
   getEmployees, getShifts, getShiftTemplates, getSwapRequests,
@@ -71,6 +71,12 @@ export function renderSchedule() {
   const container = document.getElementById('schedule-container');
   if (!container) return;
   container.className = 'schedule-container ' + (view === 'month' ? 'schedule-month' : 'schedule-week');
+
+  const filter = getScheduleFilter();
+  const ftAll = document.getElementById('ft-all');
+  const ftMe = document.getElementById('ft-me');
+  if (ftAll) ftAll.classList.toggle('active', filter === 'all');
+  if (ftMe) ftMe.classList.toggle('active', filter === 'me');
 
   if (view === 'month') {
     document.getElementById('date-label').textContent = MONTHS[d.getMonth()] + ' ' + d.getFullYear();
@@ -155,8 +161,15 @@ function renderWeekView(container, week) {
 
 function getShiftsForDay(date) {
   const area = getArea();
+  const filter = getScheduleFilter();
+  const myId = getUserId();
+  
   return getShifts()
-    .filter(s => s.date === date && s.area === area)
+    .filter(s => {
+      if (s.date !== date || s.area !== area) return false;
+      if (filter === 'me' && s.employee_id !== myId) return false;
+      return true;
+    })
     .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
 }
 
@@ -424,6 +437,15 @@ export function renderTausch() {
 
   content.innerHTML = html;
 }
+
+window.setScheduleFilter = (filter) => {
+  setScheduleFilter(filter);
+  const ftAll = document.getElementById('ft-all');
+  const ftMe = document.getElementById('ft-me');
+  if (ftAll) ftAll.classList.toggle('active', filter === 'all');
+  if (ftMe) ftMe.classList.toggle('active', filter === 'me');
+  renderSchedule();
+};
 
 // ===== TIME =====
 export function renderTime(timeMode = 'list') {
