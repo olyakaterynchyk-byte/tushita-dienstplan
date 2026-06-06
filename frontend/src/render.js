@@ -41,7 +41,7 @@ export function renderSidebar() {
         <div class="avatar online" style="background:${avatarColor(fullName(e))};">${initials(e)}</div>
         <div class="emp-info">
           <div class="emp-name">${escapeHtml(shortName(e))}${isMe?' <span style="color:var(--accent-dark);font-size:11px;">(Du)</span>':''}</div>
-          <div class="emp-hours"><span class="${status}">${planned.toFixed(2).replace('.', ',')}</span> / ${target.toFixed(2).replace('.', ',')}</div>
+          ${isAdmin() || isMe ? `<div class="emp-hours"><span class="${status}">${planned.toFixed(2).replace('.', ',')}</span> / ${target.toFixed(2).replace('.', ',')}</div>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -531,11 +531,11 @@ export function viewProfile(empId) {
     <div style="font-size:12px;color:var(--text-mute);margin-top:8px;">
       Angelegt am ${emp.created_at ? new Date(emp.created_at).toLocaleDateString('de-DE') : '—'}
     </div>
-    <div style="margin-top:16px;padding:12px;background:var(--surface-2);border-radius:10px;">
+    ${isAdmin() || isMe ? `<div style="margin-top:16px;padding:12px;background:var(--surface-2);border-radius:10px;">
       <div style="font-size:11px;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.5px;">Geplante Stunden (${MONTHS[parseDate(getCursorDate()).getMonth()]})</div>
       <div style="font-size:22px;font-weight:700;margin-top:4px;">${planned.toFixed(2).replace('.', ',')}h</div>
       <div style="font-size:12px;color:var(--text-soft);">von ${(emp.hours || 0).toFixed(2).replace('.', ',')}h / Monat</div>
-    </div>
+    </div>` : ''}
     ${canEdit ? `<div class="profile-actions">
       ${isAdmin() ? `<button class="action-circle green" onclick="window.openEmployeeModal('${emp.id}')" title="Bearbeiten">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -577,10 +577,10 @@ export function viewProfile(empId) {
           <option value="both" ${emp.area==='both'?'selected':''}>Beides</option>
         </select>
       </div>
-      <div class="form-group">
+      ${isAdmin() || isMe ? `<div class="form-group">
         <label>Soll-Stunden / Monat</label>
         <input type="number" value="${emp.hours || 0}" ${isAdmin()?'':'readonly'} onchange="window.updateEmpField('${emp.id}','hours',parseFloat(this.value)||0)">
-      </div>
+      </div>` : ''}
     </div>
     <div class="form-group" style="margin-top:18px;">
       <label>Notiz</label>
