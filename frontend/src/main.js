@@ -1,5 +1,6 @@
-import { initAuth, signIn, signOut, getProfile, isAdmin, updatePassword, getUserEmail, getToken } from './auth.js';
+import { initAuth, signIn, signOut, getProfile, isAdmin, updatePassword, getUserEmail, getToken, changeOwnPassword } from './auth.js';
 import { loadAllData } from './api.js';
+import { resetEmployeePassword } from './api-backend.js';
 import { getArea, setArea, getView, setView, getCursorDate, setCursorDate } from './state.js';
 import { parseDate, formatDate } from './utils.js';
 
@@ -186,8 +187,25 @@ window.goToToday = () => {
 window.deleteShift = () => {
   if (window.deleteShiftAction) window.deleteShiftAction();
 };
-window.openPasswordModal = (id) => {
-  alert('Passwort ändern bald verfügbar');
+window.openPasswordModal = async (id) => {
+  if (id === 'self' || !id) {
+    window._passwordTargetId = 'self';
+    document.getElementById('old-password-group').style.display = 'block';
+    document.getElementById('old-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('new-password-2').value = '';
+    document.querySelector('#password-modal .modal-title').textContent = 'Passwort ändern';
+    document.getElementById('password-modal').classList.add('show');
+  } else {
+    if (confirm('Soll ein Passwort-Reset-Link an diesen Mitarbeiter gesendet werden?')) {
+      try {
+        const res = await resetEmployeePassword(id);
+        alert(res.message || 'Reset-Link gesendet.');
+      } catch(e) {
+        alert('Fehler: ' + e.message);
+      }
+    }
+  }
 };
 window.closeModal = (id) => {
   const el = document.getElementById(id);
@@ -215,7 +233,7 @@ window.showUserMenu = (e) => {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Mein Profil
     </button>` : ''}
-    <button onclick="window.changePassword();window.hideContextMenu()">
+    <button onclick="window.openPasswordModal('self');window.hideContextMenu()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       Passwort ändern
     </button>
@@ -246,7 +264,20 @@ window.logout = async () => {
   window.location.reload();
 };
 window.exportData = () => alert('Export nicht mehr verfügbar (Daten sind jetzt in der Cloud)');
-window.changePassword = () => alert('Bald verfügbar');
+window.changePassword = async () => {
+  const p1 = document.getElementById('new-password').value;
+  const p2 = document.getElementById('new-password-2').value;
+  if(p1.length < 6) return alert('Passwort muss mindestens 6 Zeichen haben.');
+  if(p1 !== p2) return alert('Passwörter stimmen nicht überein.');
+  
+  try {
+    await changeOwnPassword(p1);
+    alert('Dein Passwort wurde erfolgreich geändert.');
+    window.closeModal('password-modal');
+  } catch (e) {
+    alert('Fehler beim Ändern des Passworts: ' + e.message);
+  }
+};
 window.copyShift = () => alert('Nutze bitte die "Zeitraum kopieren" Funktion');
 window.updateEmpField = () => {};
 
