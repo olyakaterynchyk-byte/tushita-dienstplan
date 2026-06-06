@@ -2,7 +2,7 @@ import { getArea, getCursorDate, setCursorDate } from './state.js';
 import { isAdmin, getUserId } from './auth.js';
 import { 
   getEmployeesForArea, getTemplatesForArea, getShifts, getSwapRequests, findTemplate, findShift, findEmployee,
-  createSwapRequest, loadAllData, updateOwnProfile
+  createSwapRequest, cancelSwapRequest, takeSwapRequest, loadAllData, updateOwnProfile
 } from './api.js';
 import {
   createShift, updateShift, deleteShift, publishShifts, copyPeriod, createEmployee,
@@ -644,17 +644,20 @@ window.requestSwap = async (shiftId) => {
 };
 
 window.cancelSwap = async (swapId) => {
+  window.hideContextMenu();
   try {
-    const { cancelSwapRequest } = await import('./api.js');
     await cancelSwapRequest(swapId);
+    await loadAllData();
     renderAll();
+    window.toast('Tauschanfrage zurückgezogen');
   } catch (err) { alert(err.message); }
 };
 
 window.takeSwap = async (swapId) => {
+  window.hideContextMenu();
   try {
-    const { takeSwapRequest } = await import('./api.js');
     await takeSwapRequest(swapId, getUserId());
+    await loadAllData();
     renderAll();
     window.toast('Schicht übernommen!');
   } catch (err) { alert(err.message); }
