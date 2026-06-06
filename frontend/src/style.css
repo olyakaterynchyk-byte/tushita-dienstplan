@@ -237,9 +237,25 @@
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column; overflow: hidden;
     flex-shrink: 0;
+    transition: transform 0.3s ease, width 0.3s ease;
+  }
+  .sidebar.toggled {
+    display: none !important;
   }
   @media (max-width: 1100px) {
     .sidebar { width: 220px; }
+  }
+  @media (max-width: 900px) {
+    .sidebar {
+      display: none;
+    }
+    .sidebar.toggled {
+      display: flex !important;
+      position: absolute;
+      z-index: 50;
+      height: 100%;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+    }
   }
   .sidebar-tabs {
     display: flex; padding: 12px 12px 8px; gap: 4px;
